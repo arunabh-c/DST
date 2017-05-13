@@ -18,3 +18,4 @@
 2017-04-25 12:10:12.922237 Stock purchased: SBGL, Total stocks: 30.0, Final purchase amount: 242.7
 2017-05-05 09:40:05.829911 Stock sold: PDEX, Profit % made: 8.88888888889
 2017-05-05 10:45:31.457624 Stock purchased: TECK, Total stocks: 15.0, Final purchase amount: 277.3335
+2017-05-11 09:57:22.432801 Stock purchased: MEET, Total stocks: 2.0, Final purchase amount: 10.17

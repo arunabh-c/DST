@@ -55,7 +55,7 @@ def robinhood_calls(command, stk):
 			exec_flag = True
 		except Exception:
 			import traceback
-			print ('***ROBINHOOD CALL EXCEPTION***: ' + stk + ", " + command + ", " + traceback.format_exc() + ": Waiting for 10 seconds before re-attempting..")
+			print (str(datetime.now()) + ' ***ROBINHOOD CALL EXCEPTION***: ' + stk + ", " + command + ", " + traceback.format_exc() + ": Waiting for 10 seconds before re-attempting..")
 			try_counter = try_counter + 1
 			time.sleep(10)
 			if try_counter == 10:
@@ -73,7 +73,7 @@ def finviz_calls(url):
 			exec_flag = True
 		except Exception:
 			import traceback
-			print ('***FINVIZ CALL EXCEPTION***: ' + traceback.format_exc() + ": Waiting for 10 seconds before re-attempting..")
+			print (str(datetime.now()) + ' ***FINVIZ CALL EXCEPTION***: ' + traceback.format_exc() + ": Waiting for 10 seconds before re-attempting..")
 			try_counter = try_counter + 1
 			time.sleep(10)
 			if try_counter == 10:
@@ -129,7 +129,7 @@ def check_buy_opportunity(stk):
 
 					buy_permit = True
 	else:
-		print "Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+		print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	return buy_permit
 
 def check_sell_opportunity(stk):
@@ -166,7 +166,7 @@ def check_sell_opportunity(stk):
 
 					sale_permit = True
 	else:
-		print "Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+		print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	return sale_permit
 	
 def replace_parameter(old_param, new_param, url):
@@ -246,7 +246,7 @@ def send_email(message):
 		server.sendmail(fromaddr, toaddr, text)
 		server.quit()
 	except smtplib.SMTPAuthenticationError, e:
-		print ("SMTPAuthenticationError" + str(e))
+		print (str(datetime.now()) + " SMTPAuthenticationError: " + str(e))
 	
 def last_state_reader():
 		global start_seed, my_trader
@@ -280,7 +280,7 @@ def last_state_reader():
 					gains_since_stk_purchase = 100.0*(last_stock_present_price - last_stock_purchase_price[j])/last_stock_purchase_price[j]
 					print (str(datetime.now()) + ": Stock holding: " + last_stock[j] + " purchased on " + str(last_purchase_time[j]) + ", Gain since last purchase: " + str(gains_since_stk_purchase) + "%")
 				elif last_stock_present_price == None:
-					print "Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+					print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 
 			gains_since_beginning = 100.0*(new_balance - start_seed)/start_seed
 			print ("Net Gain since beginning: " + str(gains_since_beginning) + "%")
@@ -342,7 +342,7 @@ def purchase_accounting(last_purchase_time, last_stock, last_stock_quantity, las
 		else:
 			print ("Not enough cash left to buy " + final_stock)
 	elif final_stock_price == None:
-		print "Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+		print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 			
 def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
 	sale_price = 0.0
@@ -359,8 +359,8 @@ def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
 		send_email(str(datetime.now()) + " Stock sold: " + stk[stk_idx] + ", Profit % made: " + str(sale_gain))
 		print (str(datetime.now()) + " Free cash left: " + str(free_cash))
 
-	elif sale_price == None: 
-		print "Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+	elif sale_price == None:
+		print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 
 def result_check(url,last_stock,free_cash):
 	global my_trader, new_stocks_found
@@ -393,14 +393,14 @@ def result_check(url,last_stock,free_cash):
 						if stk_tradeable_on_robinhood == "True" and stk not in last_stock:#Proceed only if stock tradeable on robinhood
 							stock.append(stk)
 					elif json_obj == None:
-						print "Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+						print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 
 				elif stk not in last_stock:
 					stock.append(stk)
 			elif final_stock_price == None:
-				print "Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+				print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	elif page_source == None: 
-		print "Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
+		print str(datetime.now()) + " Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
 
 	return stock
 
@@ -434,7 +434,7 @@ def check_stk_sale(stk):
 			if SMA20 > stk_grwth_purchase_threshold[0] or SMA50 > stk_grwth_purchase_threshold[0] or Perf_week > stk_grwth_purchase_threshold[0] or Perf_month > stk_grwth_purchase_threshold[0]: 
 				sale_flag = True
 	elif page_source == None: 
-		print "Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
+		print str(datetime.now()) + " Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
 
 	return sale_flag
 
@@ -448,7 +448,7 @@ def rearrange_stox(stk_array):
 		if page_source != None:
 			sma_array.append(get_param_val('">SMA20</td><td width="8%" class="snapshot-td2" align="left"><b>', '</b></td>', page_source))
 		elif page_source == None: 
-			print "Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
+			print str(datetime.now()) + " Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
 
 	return [x for (y,x) in sorted(zip(sma_array,stk_array))]
 
