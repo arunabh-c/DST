@@ -68,7 +68,7 @@ def finviz_calls(url):
 	try_counter = 0
 	while exec_flag == False and try_counter < 10:
 		try:
-			response = urllib2.urlopen(url)
+			response = urllib2.urlopen(url, timeout=10.0)
 			page_source = response.read()
 			exec_flag = True
 		except Exception:
