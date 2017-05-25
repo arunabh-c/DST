@@ -1,3 +1,3 @@
 http://finviz.com/screener.ashx?v=111&f=an_recom_holdbetter,fa_debteq_u1,fa_epsqoq_high,fa_netmargin_o5,fa_pe_u10,fa_quickratio_o1,fa_roe_pos,ta_perf_1wdown,ta_perf2_4wdown,ta_rsi_os40,ta_sma20_pb,ta_sma200_pb,ta_sma50_pb&ft=4&ar=180
 http://finviz.com/screener.ashx?v=111&f=an_recom_holdbetter,fa_debteq_u1,fa_epsqoq_high,fa_netmargin_o5,fa_peg_low,fa_quickratio_o1,fa_roe_pos,ta_perf_1wdown,ta_perf2_4wdown,ta_rsi_os40,ta_sma20_pb,ta_sma200_pb,ta_sma50_pb&ft=4
-http://finviz.com/screener.ashx?v=111&f=an_recom_holdbetter,fa_debteq_u1,fa_epsyoy1_pos,fa_netmargin_pos,fa_pe_low,fa_peg_low,fa_quickratio_o1,fa_salesqoq_pos,ta_perf_1wdown,ta_perf2_4wdown,ta_rsi_os40,ta_sma20_pb,ta_sma200_pb,ta_sma50_pb&ft=4&ar=180
+http://finviz.com/screener.ashx?v=111&f=an_recom_holdbetter,fa_debteq_u1,fa_epsyoy1_pos,fa_netmargin_pos,fa_pe_low,fa_peg_low,fa_quickratio_o1,fa_salesqoq_pos,ta_perf_1wdown,ta_perf2_4wdown,ta_rsi_os30,ta_sma20_pb,ta_sma200_pb,ta_sma50_pb&ft=4&ar=180
