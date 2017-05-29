@@ -9,6 +9,7 @@ import smtplib
 import json
 import socket
 import inspect
+import numpy
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from datetime import datetime, timedelta
@@ -404,10 +405,10 @@ def result_check(url,last_stock,free_cash):
 
 	return stock
 
-def get_param_val(param, end, page_source):
+def get_param_val(param, end, page_source):#parame = keyword/start,end = end 
 		start = page_source.index(param) + len(param)
 		end = page_source.index(end, start)
-		if page_source[start:end][0] == '<':
+		if page_source[start:end][0] == '<':#Accounts for color component
 			start = start + 29
 			end = end - 7
 		if page_source[start:end][len(page_source[start:end])-1] == '%':
@@ -439,18 +440,25 @@ def check_stk_sale(stk):
 	return sale_flag
 
 def rearrange_stox(stk_array):
-	sma_array = []
+	rank_array = numpy.zeros(len(stk_array)-1)
 	page_source = ""
+	check_list = ['">SMA200</td><td width="8%" class="snapshot-td2" align="left"><b>', 'RSI (14)</td><td width="8%" class="snapshot-td2" align="left"><b>', 'PEG</td><td width="8%" class="snapshot-td2" align="left"><b>', 'P/E</td><td width="8%" class="snapshot-td2" align="left"><b>']
 	stk_array = set(stk_array)
-	for stk in stk_array:
+	if len(stk_array) > 1:
+		for k in range (0, len(check_list)):
+			var_array = []
+			for stk in stk_array:
+				page_source = finviz_calls("http://finviz.com/quote.ashx?t=" + stk + "&ty=c&p=d&b=1")
+				if page_source != None:
+					var = get_param_val(check_list[k], '</b></td>', page_source)
+					if var == None:
+						var = 999999.9
+					var_array.append(var)
+				elif page_source == None: 
+					print str(datetime.now()) + " Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
+			rank_array = rank_array + [i[0] for i in sorted(enumerate(var_array), key=lambda x:x[1])]
 
-		page_source = finviz_calls("http://finviz.com/quote.ashx?t=" + stk + "&ty=c&p=d&b=1")
-		if page_source != None:
-			sma_array.append(get_param_val('">SMA20</td><td width="8%" class="snapshot-td2" align="left"><b>', '</b></td>', page_source))
-		elif page_source == None: 
-			print str(datetime.now()) + " Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
-
-	return [x for (y,x) in sorted(zip(sma_array,stk_array))]
+	return [x for (y,x) in sorted(zip(rank_array,stk_array))]
 
 def optimize(last_stock,last_purchase_time,free_cash):
 	global max_stx_to_hold
@@ -496,7 +504,7 @@ def optimize(last_stock,last_purchase_time,free_cash):
 
 		fin_stock.extend(tmp_stock)
 	if len(fin_stock) > 1:
-		fin_stock = [rearrange_stox(fin_stock)[0]]#Arrange final list of stocks in order of highest SMA20 drop
+		fin_stock = [rearrange_stox(fin_stock)[0]]#Arrange final list of stocks in order of highest SMA200 drop
 	return fin_stock
 
 if __name__ == '__main__':
