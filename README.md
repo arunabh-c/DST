@@ -8,11 +8,8 @@ Industry Sectors to be avoided for stock purchase listed in banned_Sectors.csv
 Add file user_details.txt in folder with following contents in same format:
 
 robinhood_username
-
 robinhood_password
-
 gmail_username
-
 gmail_password 
 
 
