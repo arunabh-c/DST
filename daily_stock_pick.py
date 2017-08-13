@@ -257,6 +257,7 @@ def last_state_reader():
 		last_stock = []
 		last_stock_quantity = []
 		last_stock_purchase_price = []
+		re_purchasable = []
 		scrap_stox = 0
 		f = open('daily_last_state.txt', 'r')		
 		try:
@@ -276,6 +277,7 @@ def last_state_reader():
 				last_purchase_time.append(datetime.strptime(holdings_array[0][j], "%Y-%m-%d %H:%M"))   
 				last_stock_quantity.append(float(holdings_array[2][j]))
 				last_stock_purchase_price.append(float(holdings_array[3][j]))
+				re_purchasable.append(0.0)
 				last_stock_present_price = 0.0
 				last_stock_present_price = float(robinhood_calls("last_trade_price('" + last_stock[j] + "')", last_stock[j]))
 				if last_stock_present_price != None and last_stock_present_price > 0.0:
@@ -285,6 +287,7 @@ def last_state_reader():
 					print (str(datetime.now()) + ": Stock holding: " + last_stock[j] + " purchased on " + str(last_purchase_time[j]) + ", Gain since last purchase: " + str(gains_since_stk_purchase) + "%")
 					if stk_value < scrap_stk_threshold:
 						scrap_stox += 1
+						re_purchasable[j] = 1.0
 				elif last_stock_present_price == None:
 					print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 			avail_cash = free_cash / max (max_stx_to_hold - len(holdings_array[0]) + scrap_stox,  1)
@@ -296,8 +299,7 @@ def last_state_reader():
 			new_balance = start_seed
 			free_cash = start_seed
 			avail_cash = free_cash / max_stx_to_hold
-
-		return last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash
+		return last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchasable
 
 def time_to_sleep():
 	day = datetime.now().isoweekday()
@@ -314,7 +316,7 @@ def time_to_sleep():
 	elif (day > 5):#weekend, sleep till monday 910am
 		tts = (7-day)*24*3600 + (33-hour)*3600 - minute*60 - second + 600
 	if tts > 300:
-		_, _, _, _, _, _, _ = last_state_reader()
+		_, _, _, _, _, _, _, _ = last_state_reader()
 		d = datetime(1,1,1) + timedelta(seconds=tts)
 		#print("Sleeping for ")
 		#print("%d:%d:%d:%d" % (d.day-1, d.hour, d.minute, d.second))
@@ -366,7 +368,7 @@ def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
 	elif sale_price == None:
 		print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 
-def result_check(url,last_stock,free_cash):
+def result_check(url,last_stock,free_cash,re_purchase):
 	global my_trader, new_stocks_found
 	page_source = ""
 	
@@ -394,12 +396,12 @@ def result_check(url,last_stock,free_cash):
 							stk_tradeable_on_robinhood = str(stxx[0]['tradeable'])			
 						else:
 							stk_tradeable_on_robinhood = "False"			
-						if stk_tradeable_on_robinhood == "True" and stk not in last_stock:#Proceed only if stock tradeable on robinhood
+						if stk_tradeable_on_robinhood == "True" and (stk not in last_stock or re_purchase[last_stock.index(stk)] == 1.0):#Proceed only if stock tradeable on robinhood
 							stock.append(stk)
 					elif json_obj == None:
 						print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 
-				elif stk not in last_stock:
+				elif stk not in last_stock or re_purchase[last_stock.index(stk)] == 1.0:
 					stock.append(stk)
 			elif final_stock_price == None:
 				print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
@@ -443,7 +445,7 @@ def check_stk_sale(stk):
 	return sale_flag
 
 def rearrange_stox(stk_array):
-	rank_array = numpy.zeros(len(stk_array)-1)
+	rank_array = numpy.zeros(len(stk_array))
 	page_source = ""
 	check_list = ['">SMA200</td><td width="8%" class="snapshot-td2" align="left"><b>', 'RSI (14)</td><td width="8%" class="snapshot-td2" align="left"><b>', 'PEG</td><td width="8%" class="snapshot-td2" align="left"><b>', 'P/E</td><td width="8%" class="snapshot-td2" align="left"><b>']
 	stk_array = set(stk_array)
@@ -463,7 +465,7 @@ def rearrange_stox(stk_array):
 
 	return [x for (y,x) in sorted(zip(rank_array,stk_array))]
 
-def optimize(last_stock,last_purchase_time,free_cash):
+def optimize(last_stock,last_purchase_time,free_cash,re_purchase):
 	#!!!!!!!!!!!!!test url below
 	#init_url = []
 	#init_url.append("http://finviz.com/screener.ashx?v=111&f=an_recom_holdbetter,fa_debteq_u1,fa_epsqoq_high,fa_netmargin_o5,fa_quickratio_o1,fa_roe_pos,ta_perf_1wdown,ta_perf2_4wdown,ta_rsi_os40,ta_sma20_pb,ta_sma200_pb,ta_sma50_pb&ft=4&ar=180")
@@ -475,30 +477,30 @@ def optimize(last_stock,last_purchase_time,free_cash):
 		repl_count = 0	
 		tmp_stock = []
 		select_order_index = 0
-		tmp_stock = result_check(url,last_stock,free_cash)
+		tmp_stock = result_check(url,last_stock,free_cash,re_purchase)
 		extra_param_rows = 0
 
 		while extra_param_rows < len(extra_filters):#Add filters for PEG ratio/PE ratio, EPS Growth, Sales Growth if possible
 			extra_param_columns = 0
 			while len(tmp_stock) > 1 and extra_param_columns < len(extra_filters[extra_param_rows]):
 					tmp_url = append_parameter(extra_filters[extra_param_rows][extra_param_columns], url)
-					tmp_stock = result_check(tmp_url,last_stock,free_cash)
+					tmp_stock = result_check(tmp_url,last_stock,free_cash,re_purchase)
 					if len(tmp_stock) > 0:
 						fin_url = tmp_url
 					extra_param_columns = extra_param_columns + 1
 			url = fin_url
-			tmp_stock = result_check(url,last_stock,free_cash)
+			tmp_stock = result_check(url,last_stock,free_cash,re_purchase)
 			extra_param_rows = extra_param_rows + 1
 
 		while len(tmp_stock) > 1 and select_order_index < len(select_order):
 			filter_success_flag = False
 			if len(tmp_stock) > 1:
 				url, prev_url, repl_count = replace_parameter(select_order[select_order_index][0],select_order[select_order_index][1], url)
-				tmp_stock = result_check(url,last_stock,free_cash)
+				tmp_stock = result_check(url,last_stock,free_cash,re_purchase)
 				filter_success_flag = True
 			if tmp_stock == None or len(tmp_stock) < 1:
 				url = prev_url
-				tmp_stock = result_check(url,last_stock,free_cash)
+				tmp_stock = result_check(url,last_stock,free_cash,re_purchase)
 				filter_success_flag = False
 			#if filter_success_flag == True and repl_count == 1:
 				#print ("Filtered on " + select_order[select_order_index][2])
@@ -511,7 +513,7 @@ def optimize(last_stock,last_purchase_time,free_cash):
 
 if __name__ == '__main__':
 	print ("Starting Loop..")
-	last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash = last_state_reader() 
+	last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader() 
 	new_stocks_start_time = datetime.now()
 	while True:
 		start_time = datetime.now()
@@ -522,9 +524,9 @@ if __name__ == '__main__':
 					if datetime.now().date() != last_purchase_time[i].date() and check_stk_sale(last_stock[i]):
 						if check_sell_opportunity(last_stock[i]):
 							sale_accounting(last_stock, last_stock_quantity[i], last_stock_purchase_price[i], free_cash, i)
-							last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash = last_state_reader()
+							last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader()
 
-			final_stock = optimize(last_stock,last_purchase_time, avail_cash)#Retreive latest batch of buy-able stocks
+			final_stock = optimize(last_stock,last_purchase_time, avail_cash, re_purchase)#Retreive latest batch of buy-able stocks
 
 			for i in range(0,len(final_stock)):#Check if any stocks ready for purchase
 				if final_stock[i] not in new_stocks_found:
@@ -532,7 +534,7 @@ if __name__ == '__main__':
 					new_stocks_found.append(final_stock[i])
 				if check_buy_opportunity(final_stock[i]):
 					purchase_accounting(last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, avail_cash, final_stock[i])
-					last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash = last_state_reader()
+					last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader()
 
 		if (datetime.now() - new_stocks_start_time).days > 30.0:#Refresh new_stocks_found array every 30 days to remove stale stocks
 			new_stocks_found = []
