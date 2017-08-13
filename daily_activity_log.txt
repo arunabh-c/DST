@@ -19,3 +19,18 @@
 2017-05-05 09:40:05.829911 Stock sold: PDEX, Profit % made: 8.88888888889
 2017-05-05 10:45:31.457624 Stock purchased: TECK, Total stocks: 15.0, Final purchase amount: 277.3335
 2017-05-11 09:57:22.432801 Stock purchased: MEET, Total stocks: 2.0, Final purchase amount: 10.17
+2017-06-13 12:54:29.813470 Stock sold: CGA, Profit % made: 6.0
+2017-06-15 13:20:08.867324 Stock purchased: EBIO, Total stocks: 1.0, Final purchase amount: 1.3942
+2017-06-16 11:24:18.260173 Stock sold: GPIC, Profit % made: 10.6981416374
+2017-06-16 12:25:16.893213 Stock purchased: VALE, Total stocks: 28.0, Final purchase amount: 218.96
+2017-07-11 10:34:44.378624 Stock sold: MEET, Profit % made: 3.44149459194
+2017-07-11 11:20:10.309941 Stock purchased: AMSWA, Total stocks: 1.0, Final purchase amount: 9.93
+2017-07-12 09:34:41.484549 Stock sold: TECK, Profit % made: 3.27818312609
+2017-07-12 09:59:42.227547 Stock sold: VALE, Profit % made: 16.2404092072
+2017-07-12 14:45:08.224276 Stock purchased: FRAN, Total stocks: 54.0, Final purchase amount: 533.52
+2017-07-25 12:29:46.556933 Stock sold: ERF, Profit % made: 22.2222222222
+2017-07-26 14:05:04.527726 Stock purchased: EGRX, Total stocks: 5.0, Final purchase amount: 269.3
+2017-07-28 09:50:10.895652 Stock purchased: CVRR, Total stocks: 1.0, Final purchase amount: 7.975
+2017-07-31 12:05:44.950377 Stock purchased: HLTH, Total stocks: 2.0, Final purchase amount: 2.7
+2017-08-01 09:34:24.898591 Stock sold: FRAN, Profit % made: -4.35222672065
+2017-08-02 11:27:16.912984 Stock sold: SBGL, Profit % made: -34.1038318912
