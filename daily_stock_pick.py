@@ -448,20 +448,22 @@ def rearrange_stox(stk_array):
 	rank_array = numpy.zeros(len(stk_array))
 	page_source = ""
 	check_list = ['">SMA200</td><td width="8%" class="snapshot-td2" align="left"><b>', 'RSI (14)</td><td width="8%" class="snapshot-td2" align="left"><b>', 'PEG</td><td width="8%" class="snapshot-td2" align="left"><b>', 'P/E</td><td width="8%" class="snapshot-td2" align="left"><b>']
-	stk_array = set(stk_array)
 	if len(stk_array) > 1:
-		for k in range (0, len(check_list)):
-			var_array = []
-			for stk in stk_array:
-				page_source = finviz_calls("http://finviz.com/quote.ashx?t=" + stk + "&ty=c&p=d&b=1")
+		for k in range (0, len(check_list)):#rank stks in stk_array by check_list items
+			var_array = []#reset rank array 
+			for stk in stk_array:#cycle through stocks given a check list item
+				page_source = finviz_calls("http://finviz.com/quote.ashx?t=" + stk + "&ty=c&p=d&b=1")#retrieve entire stk stat page
 				if page_source != None:
-					var = get_param_val(check_list[k], '</b></td>', page_source)
+					var = get_param_val(check_list[k], '</b></td>', page_source)#retrieve checklist item for stock
 					if var == None:
-						var = 999999.9
+						var = 999999.9#assign high value for stocks with checklist item unknown to place them at end of ranking
 					var_array.append(var)
 				elif page_source == None: 
 					print str(datetime.now()) + " Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
-			rank_array = rank_array + [i[0] for i in sorted(enumerate(var_array), key=lambda x:x[1])]
+			output = [0] * len(var_array)
+			for i, x in enumerate(sorted(range(len(var_array)), key=lambda y: var_array[y])):
+				output[x] = i#rank all stocks for check list items, arrange sorted rank in original order of stox
+			rank_array = rank_array + output#cumulatively add ranks
 
 	return [x for (y,x) in sorted(zip(rank_array,stk_array))]
 
@@ -502,13 +504,13 @@ def optimize(last_stock,last_purchase_time,free_cash,re_purchase):
 				url = prev_url
 				tmp_stock = result_check(url,last_stock,free_cash,re_purchase)
 				filter_success_flag = False
-			#if filter_success_flag == True and repl_count == 1:
-				#print ("Filtered on " + select_order[select_order_index][2])
+			'''if filter_success_flag == True and repl_count == 1:#Debug Only Line, comment out for real run
+				print ("Filtered on " + select_order[select_order_index][2])'''
 			select_order_index = select_order_index + 1
 
-		fin_stock.extend(tmp_stock)
+		fin_stock.extend(tmp_stock)#concatenates tmp_stock to fin_stock
 	if len(fin_stock) > 1:
-		fin_stock = [rearrange_stox(fin_stock)[0]]#Arrange final list of stocks in order of highest SMA200 drop
+		fin_stock = [rearrange_stox(set(fin_stock))[0]]#Arrange final list of stocks in order of highest SMA200 drop. set(fin_stock) ensures duplicates eliminated
 	return fin_stock
 
 if __name__ == '__main__':
