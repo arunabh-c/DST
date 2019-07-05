@@ -1,0 +1,4 @@
+rboinhood_user
+robinhood_pass
+gmail_user
+gmail_pass
