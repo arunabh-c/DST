@@ -293,7 +293,7 @@ def last_state_reader():
 				row_counter = row_counter + 1
 		finally:
 			f.close()		    	
-		if len(holdings_array[0]) > 0:
+		if len(holdings_array[0]) > 1:
 			last_stock = holdings_array[1]
 			new_balance = free_cash
 			for j in range(0,len(holdings_array[0])):
