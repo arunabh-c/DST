@@ -562,7 +562,7 @@ if __name__ == '__main__':
 		start_time = datetime.now()
 		
 		#if True:
-		if (datetime.now().isoweekday() in range(1,6)) and datetime.now().time() > datetime.strptime('6:09','%H:%M').time() and datetime.now().time() < datetime.strptime('14:01','%H:%M').time():
+		if (datetime.now().isoweekday() in range(1,6)) and datetime.now().time() > datetime.strptime('14:39','%H:%M').time() and datetime.now().time() < datetime.strptime('21:01','%H:%M').time():
 			for i in range(0,len(last_stock)):#Check if any stocks ready for sale
 				if i < len(last_stock):
 					if datetime.now().date() != last_purchase_time[i].date():
