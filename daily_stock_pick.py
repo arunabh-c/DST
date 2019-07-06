@@ -22,6 +22,7 @@ expired_stk_grwth_purchase_threshold = 0.0
 total_5minute_intervals_to_check_avg_growth = 10
 scrap_stk_threshold = 50.0
 new_stocks_found = []
+suffix = "\[\033[0m\]"
 
 with open('select_order.csv', 'rb') as f:
 		reader = csv.reader(f)
@@ -311,7 +312,7 @@ def last_state_reader():
 						prefix = "\033[1;32;40m "
 					else:
 						prefix = "\033[1;31;40m "
-					print (str(datetime.now()) + ": Stock holding: " + last_stock[j] + " purchased on " + str(last_purchase_time[j]) + ", Gain since last purchase:" + prefix + str(gains_since_stk_purchase) + "%")
+					print (str(datetime.now()) + ": Stock holding: " + last_stock[j] + " purchased on " + str(last_purchase_time[j]) + ", Gain since last purchase:" + prefix + str(gains_since_stk_purchase) + "%" + suffix)
 					if stk_value < scrap_stk_threshold:
 						scrap_stox += 1
 						re_purchasable[j] = 1.0
@@ -324,7 +325,7 @@ def last_state_reader():
 				prefix = "\033[1;32;40m "
 			else:
 				prefix = "\033[1;31;40m "
-			print ("Net Gain since beginning:" + prefix + str(gains_since_beginning) + "%")
+			print ("Net Gain since beginning:" + prefix + str(gains_since_beginning) + "%" + suffix)
 			print ("Latest Balance: " + str(new_balance))
 		else:
 			new_balance = start_seed
