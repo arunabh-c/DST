@@ -555,7 +555,7 @@ def optimize(last_stock,last_purchase_time,free_cash,re_purchase):
 	return fin_stock
 
 if __name__ == '__main__':
-	print ("Starting Loop..")
+	print ("Starting Loop.." + str(datetime.now()))
 	last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader() 
 	new_stocks_start_time = datetime.now()
 	while True:
