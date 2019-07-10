@@ -271,7 +271,7 @@ def send_email(message):
 		server.quit()
 	except Exception:
 		import traceback
-		print (str(datetime.now()) + ' ***EMAIL EXCEPTION***: ' + traceback.format_exc())
+		print (str(datetime.utcnow()) + ' ***EMAIL EXCEPTION***: ' + traceback.format_exc())
 	
 def last_state_reader():
 		global start_seed, my_trader, max_stx_to_hold
@@ -558,7 +558,7 @@ if __name__ == '__main__':
 	last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader() 
 	new_stocks_start_time = datetime.utcnow()
 	while True:
-		start_time = datetime.now()
+		start_time = datetime.utcnow()
 		
 		#if True:
 		if (datetime.utcnow().isoweekday() in range(1,6)) and datetime.utcnow().time() > datetime.strptime('13:39','%H:%M').time() and datetime.utcnow().time() < datetime.strptime('20:01','%H:%M').time():
