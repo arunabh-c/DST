@@ -126,7 +126,15 @@ def check_buy_opportunity(stk):
 				perf_yesterday = 100.0 * (yesterday_close_price - day_before_yesterday_close_price)/day_before_yesterday_close_price
 				perf_day_before_yesterday = 100.0 * (day_before_yesterday_close_price - day_before_day_before_yesterday_close_price)/day_before_day_before_yesterday_close_price
 				avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
-				if  (perf_today <= stk_grwth_purchase_threshold[0] or perf_yesterday <= stk_grwth_purchase_threshold[0]) and (perf_yesterday <= stk_grwth_purchase_threshold[0] or perf_day_before_yesterday <= stk_grwth_purchase_threshold[0]) and (avg_growth >= stk_grwth_purchase_threshold[0] and avg_growth <= stk_grwth_purchase_threshold[1]):
+				print ("close_price_right_now: " + str(close_price_right_now))
+				print ("yesterday_close_price: " + str(yesterday_close_price))
+				print ("day_before_yesterday_close_price: " + str(day_before_yesterday_close_price))
+				print ("day_before_day_before_yesterday_close_price: " + str(day_before_day_before_yesterday_close_price))
+				print ("perf_today: " + str(perf_today))
+				print ("perf_yesterday: " + str(perf_yesterday))
+				print ("perf_day_before_yesterday: " + str(perf_day_before_yesterday))
+				print ("avg_growth: " + str(avg_growth))
+				if (perf_today <= stk_grwth_purchase_threshold[0] or perf_yesterday <= stk_grwth_purchase_threshold[0]) and (perf_yesterday <= stk_grwth_purchase_threshold[0] or perf_day_before_yesterday <= stk_grwth_purchase_threshold[0]) and (avg_growth >= stk_grwth_purchase_threshold[0] and avg_growth <= stk_grwth_purchase_threshold[1]):
 					print (str(datetime.utcnow()) + " Stock ready to be purchased: " + stk)
 					print (str(datetime.utcnow()) + " Performance today for " + stk + ": " + str(perf_today))
 					print (str(datetime.utcnow()) + " Performance yesterday for " + stk + ": " + str(perf_yesterday))
