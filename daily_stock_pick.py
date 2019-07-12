@@ -104,12 +104,30 @@ def get_avg_growth(historicals, todays_perf_size):
 		avg_growth = avg_growth + 10.0*(float(historicals[todays_perf_size-1-i]['close_price']) - float(historicals[todays_perf_size-2-i]['close_price']))/(float(historicals[todays_perf_size-2-i]['close_price']))
 	return avg_growth
 
+def get_three_day_perf(today,today_size,week,week_size):
+	close_price_right_now = float(today['historicals'][today_size-1]['close_price'])
+	yesterday_close_price = float(week['historicals'][week_size-today_size-1]['close_price'])
+	day_before_yesterday_close_price = float(week['historicals'][week_size-today_size-79]['close_price'])
+	day_before_day_before_yesterday_close_price = float(week['historicals'][week_size-today_size-157]['close_price'])
+	perf_today = 100.0 * (close_price_right_now - yesterday_close_price)/yesterday_close_price
+	perf_yesterday = 100.0 * (yesterday_close_price - day_before_yesterday_close_price)/day_before_yesterday_close_price
+	perf_day_before = 100.0 * (day_before_yesterday_close_price - day_before_day_before_yesterday_close_price)/day_before_day_before_yesterday_close_price
+	print ("close_price_right_now: " + str(close_price_right_now))
+	print ("yesterday_close_price: " + str(yesterday_close_price))
+	print ("day_before_yesterday_close_price: " + str(day_before_yesterday_close_price))
+	print ("day_before_day_before_yesterday_close_price: " + str(day_before_day_before_yesterday_close_price))
+	print ("perf_today: " + str(perf_today))
+	print ("perf_yesterday: " + str(perf_yesterday))
+	print ("perf_day_before_yesterday: " + str(perf_day_before))
+	return perf_today, perf_yesterday, perf_day_before
+
 def check_buy_opportunity(stk):
 	global stk_grwth_purchase_threshold, total_5minute_intervals_to_check_avg_growth
 	todays_perf = None
 	weeks_perf = None
 	todays_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','day','regular')", stk)
 	weeks_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','week','regular')", stk)
+	print (stk)
 
 	if todays_perf != None and weeks_perf != None:
 		todays_perf_size = 0
@@ -118,30 +136,17 @@ def check_buy_opportunity(stk):
 		if todays_perf_size > 11:
 			last_date_stamp = datetime.strptime(todays_perf['historicals'][todays_perf_size-1]['begins_at'], '%Y-%m-%dT%H:%M:%SZ').date()
 			if last_date_stamp == datetime.utcnow().date():#Avg. % growth of last 50 minutes
-				close_price_right_now = float(todays_perf['historicals'][todays_perf_size-1]['close_price'])
-				yesterday_close_price = float(weeks_perf['historicals'][weeks_perf_size-todays_perf_size-1]['close_price'])
-				day_before_yesterday_close_price = float(weeks_perf['historicals'][weeks_perf_size-todays_perf_size-79]['close_price'])
-				day_before_day_before_yesterday_close_price = float(weeks_perf['historicals'][weeks_perf_size-todays_perf_size-157]['close_price'])
-				perf_today = 100.0 * (close_price_right_now - yesterday_close_price)/yesterday_close_price
-				perf_yesterday = 100.0 * (yesterday_close_price - day_before_yesterday_close_price)/day_before_yesterday_close_price
-				perf_day_before_yesterday = 100.0 * (day_before_yesterday_close_price - day_before_day_before_yesterday_close_price)/day_before_day_before_yesterday_close_price
-				avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
-				print ("close_price_right_now: " + str(close_price_right_now))
-				print ("yesterday_close_price: " + str(yesterday_close_price))
-				print ("day_before_yesterday_close_price: " + str(day_before_yesterday_close_price))
-				print ("day_before_day_before_yesterday_close_price: " + str(day_before_day_before_yesterday_close_price))
-				print ("perf_today: " + str(perf_today))
-				print ("perf_yesterday: " + str(perf_yesterday))
-				print ("perf_day_before_yesterday: " + str(perf_day_before_yesterday))
-				print ("avg_growth: " + str(avg_growth))
-				if (perf_today <= stk_grwth_purchase_threshold[0] or perf_yesterday <= stk_grwth_purchase_threshold[0]) and (perf_yesterday <= stk_grwth_purchase_threshold[0] or perf_day_before_yesterday <= stk_grwth_purchase_threshold[0]) and (avg_growth >= stk_grwth_purchase_threshold[0] and avg_growth <= stk_grwth_purchase_threshold[1]):
-					print (str(datetime.utcnow()) + " Stock ready to be purchased: " + stk)
-					print (str(datetime.utcnow()) + " Performance today for " + stk + ": " + str(perf_today))
-					print (str(datetime.utcnow()) + " Performance yesterday for " + stk + ": " + str(perf_yesterday))
-					print (str(datetime.utcnow()) + " Performance day before yesterday for " + stk + ": " + str(perf_day_before_yesterday))
-					print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
-
-					return True
+				perf_today, perf_yesterday, perf_day_before_yesterday = get_three_day_perf(todays_perf,todays_perf_size,weeks_perf,weeks_perf_size)
+				if (perf_today <= stk_grwth_purchase_threshold[0] or perf_yesterday <= stk_grwth_purchase_threshold[0]) and (perf_yesterday <= stk_grwth_purchase_threshold[0] or perf_day_before_yesterday <= stk_grwth_purchase_threshold[0]):
+					avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
+					print ("avg_growth: " + str(avg_growth))
+					if (avg_growth >= stk_grwth_purchase_threshold[0] and avg_growth <= stk_grwth_purchase_threshold[1]):
+						print (str(datetime.utcnow()) + " Stock ready to be purchased: " + stk)
+						print (str(datetime.utcnow()) + " Performance today for " + stk + ": " + str(perf_today))
+						print (str(datetime.utcnow()) + " Performance yesterday for " + stk + ": " + str(perf_yesterday))
+						print (str(datetime.utcnow()) + " Performance day before yesterday for " + stk + ": " + str(perf_day_before_yesterday))
+						print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
+						return True
 	else:
 		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	return False
@@ -153,24 +158,19 @@ def test_short_term_sale(todays_perf, weeks_perf):
 	weeks_perf_size = len(weeks_perf['historicals'])
 	if todays_perf_size > 11:
 		last_date_stamp = datetime.strptime(todays_perf['historicals'][todays_perf_size-1]['begins_at'], '%Y-%m-%dT%H:%M:%SZ').date()
-
-		if last_date_stamp == datetime.utcnow().date():#Avg. % growth of last 50 minutes
-			close_price_right_now = float(todays_perf['historicals'][todays_perf_size-1]['close_price'])
-			yesterday_close_price = float(weeks_perf['historicals'][weeks_perf_size-todays_perf_size-1]['close_price'])
-			day_before_yesterday_close_price = float(weeks_perf['historicals'][weeks_perf_size-todays_perf_size-79]['close_price'])
-			day_before_day_before_yesterday_close_price = float(weeks_perf['historicals'][weeks_perf_size-todays_perf_size-157]['close_price'])
-			perf_today = 100.0 * (close_price_right_now - yesterday_close_price)/yesterday_close_price
-			perf_yesterday = 100.0 * (yesterday_close_price - day_before_yesterday_close_price)/day_before_yesterday_close_price
-			perf_day_before_yesterday = 100.0 * (day_before_yesterday_close_price - day_before_day_before_yesterday_close_price)/day_before_day_before_yesterday_close_price
-			avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
-			#if stk performance (today or yesterday) and(yesterday or day before) was in range and avg growth for last n 5-minute intervals in negative range sell
-			if (perf_today >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]) and (perf_day_before_yesterday >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]) and (avg_growth <= -stk_grwth_purchase_threshold[0] and avg_growth >= -stk_grwth_purchase_threshold[1]):
-				print (str(datetime.utcnow()) + " Stock ready to be sold: " + stk)
-				print (str(datetime.utcnow()) + " Performance today for " + stk + ": " + str(perf_today))
-				print (str(datetime.utcnow()) + " Performance yesterday for " + stk + ": " + str(perf_yesterday))
-				print (str(datetime.utcnow()) + " Performance day before yesterday for " + stk + ": " + str(perf_day_before_yesterday))
-				print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
-				return True
+		if last_date_stamp == datetime.utcnow().date():
+			perf_today, perf_yesterday, perf_day_before_yesterday = get_three_day_perf(todays_perf,todays_perf_size,weeks_perf,weeks_perf_size)
+			#if stk performance (today or yesterday) and(yesterday or day before) was in range
+			if (perf_today >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]) and (perf_day_before_yesterday >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]):
+				avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)#Avg. % growth of last 50 minutes
+				#if avg growth for last n 5-minute intervals in negative range sell
+				if (avg_growth <= -stk_grwth_purchase_threshold[0] and avg_growth >= -stk_grwth_purchase_threshold[1]):
+					print (str(datetime.utcnow()) + " Stock ready to be sold: " + stk)
+					print (str(datetime.utcnow()) + " Performance today for " + stk + ": " + str(perf_today))
+					print (str(datetime.utcnow()) + " Performance yesterday for " + stk + ": " + str(perf_yesterday))
+					print (str(datetime.utcnow()) + " Performance day before yesterday for " + stk + ": " + str(perf_day_before_yesterday))
+					print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
+					return True
 	return False
 
 def check_sell_opportunity(stk):
