@@ -120,7 +120,6 @@ def check_buy_opportunity(stk):
 	weeks_perf = None
 	todays_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','day','regular')", stk)
 	weeks_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','week','regular')", stk)
-	print (stk)
 
 	if todays_perf != None and weeks_perf != None:
 		todays_perf_size = 0
@@ -132,7 +131,6 @@ def check_buy_opportunity(stk):
 				perf_today, perf_yesterday, perf_day_before_yesterday = get_three_day_perf(todays_perf,todays_perf_size,weeks_perf,weeks_perf_size)
 				if (perf_today <= stk_grwth_purchase_threshold[0] or perf_yesterday <= stk_grwth_purchase_threshold[0]) and (perf_yesterday <= stk_grwth_purchase_threshold[0] or perf_day_before_yesterday <= stk_grwth_purchase_threshold[0]):
 					avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
-					print ("avg_growth: " + str(avg_growth))
 					if (avg_growth >= stk_grwth_purchase_threshold[0] and avg_growth <= stk_grwth_purchase_threshold[1]):
 						print (str(datetime.utcnow()) + " Stock ready to be purchased: " + stk)
 						print (str(datetime.utcnow()) + " Performance today for " + stk + ": " + str(perf_today))
