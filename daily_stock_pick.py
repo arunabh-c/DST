@@ -112,13 +112,6 @@ def get_three_day_perf(today,today_size,week,week_size):
 	perf_today = 100.0 * (close_price_right_now - yesterday_close_price)/yesterday_close_price
 	perf_yesterday = 100.0 * (yesterday_close_price - day_before_yesterday_close_price)/day_before_yesterday_close_price
 	perf_day_before = 100.0 * (day_before_yesterday_close_price - day_before_day_before_yesterday_close_price)/day_before_day_before_yesterday_close_price
-	print ("close_price_right_now: " + str(close_price_right_now))
-	print ("yesterday_close_price: " + str(yesterday_close_price))
-	print ("day_before_yesterday_close_price: " + str(day_before_yesterday_close_price))
-	print ("day_before_day_before_yesterday_close_price: " + str(day_before_day_before_yesterday_close_price))
-	print ("perf_today: " + str(perf_today))
-	print ("perf_yesterday: " + str(perf_yesterday))
-	print ("perf_day_before_yesterday: " + str(perf_day_before))
 	return perf_today, perf_yesterday, perf_day_before
 
 def check_buy_opportunity(stk):
