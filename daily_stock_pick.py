@@ -209,7 +209,7 @@ def append_parameter(new_param, url):
 def purchase_logger(stock, quantity, stock_price, free_cash):#Log latest stocks information into state file post purchase
 	
 	file_write_array = [str(datetime.utcnow().strftime("%Y-%m-%d %H:%M")),stock, str(quantity), str(stock_price), str(free_cash)]
-	trade_history = (os.stat('daily_last_state.txt').st_size != 0)
+	trade_history = (os.stat('daily_last_state.txt').st_size > 1)
 
 	if trade_history == False:
 		f = open('daily_last_state.txt', 'w')
