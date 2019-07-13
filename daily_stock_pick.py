@@ -455,7 +455,6 @@ def check_stock_expiry_sale(stk, purchase_date, purchase_price):
 	return False
 
 def check_stk_sale(stk):
-	sale_flag = False
 	page_source = ""
 	
 	page_source = finviz_calls("http://finviz.com/quote.ashx?t=" + stk + "&ty=c&p=d&b=1")
@@ -468,11 +467,11 @@ def check_stk_sale(stk):
 			Perf_week = get_param_val('">Perf Week</td><td width="8%" class="snapshot-td2" align="left"><b>', '</b></td>', page_source)
 			Perf_month = get_param_val('">Perf Month</td><td width="8%" class="snapshot-td2" align="left"><b>', '</b></td>', page_source)
 			if SMA20 > stk_grwth_purchase_threshold[0] or SMA50 > stk_grwth_purchase_threshold[0] or Perf_week > stk_grwth_purchase_threshold[0] or Perf_month > stk_grwth_purchase_threshold[0]: 
-				sale_flag = True
+				return True
 	elif page_source == None: 
 		print str(datetime.utcnow()) + " Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
 
-	return sale_flag
+	return False
 
 def rearrange_stox(stk_array):
 	rank_array = numpy.zeros(len(stk_array))
@@ -545,7 +544,7 @@ def optimize(last_stock,last_purchase_time,free_cash,re_purchase):
 	return fin_stock
 
 if __name__ == '__main__':
-	print ("Starting Loop.." + str(datetime.utcnow()))
+	print (str(datetime.utcnow()) + ": Starting Loop..")
 	last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader() 
 	new_stocks_start_time = datetime.utcnow()
 	while True:
