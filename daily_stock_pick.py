@@ -279,7 +279,7 @@ def last_state_reader():
 					else:
 						prefix = "\033[1;31;40m "
 					print (str(datetime.utcnow()) + ": Stock holding: " + last_stock[j] + " purchased on " + str(last_purchase_time[j]) + ", Gain since last purchase:" + prefix + str(gains_since_stk_purchase) + "%" + suffix)
-					if stk_value < scrap_stk_threshold:
+					if stk_value < min(scrap_stk_threshold, 0.05*(new_balance)):
 						scrap_stox += 1
 						re_purchasable[j] = 1.0
 				elif last_stock_present_price == None:
