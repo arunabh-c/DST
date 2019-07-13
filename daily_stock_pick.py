@@ -142,55 +142,23 @@ def check_buy_opportunity(stk):
 		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	return False
 
-def test_short_term_sale(todays_perf, weeks_perf):
+def test_short_term_sale(todays_perf, weeks_perf, todays_perf_size):
 	global stk_grwth_purchase_threshold, total_5minute_intervals_to_check_avg_growth
 
-	todays_perf_size = len(todays_perf['historicals'])
 	weeks_perf_size = len(weeks_perf['historicals'])
 	if todays_perf_size > 11:
-		last_date_stamp = datetime.strptime(todays_perf['historicals'][todays_perf_size-1]['begins_at'], '%Y-%m-%dT%H:%M:%SZ').date()
-		if last_date_stamp == datetime.utcnow().date():
-			perf_today, perf_yesterday, perf_day_before_yesterday = get_three_day_perf(todays_perf,todays_perf_size,weeks_perf,weeks_perf_size)
-			#if stk performance (today or yesterday) and(yesterday or day before) was in range
-			if (perf_today >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]) and (perf_day_before_yesterday >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]):
-				avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)#Avg. % growth of last 50 minutes
-				#if avg growth for last n 5-minute intervals in negative range sell
-				if (avg_growth <= -stk_grwth_purchase_threshold[0] and avg_growth >= -stk_grwth_purchase_threshold[1]):
-					print (str(datetime.utcnow()) + " Stock ready to be sold: " + stk)
-					print (str(datetime.utcnow()) + " Performance today for " + stk + ": " + str(perf_today))
-					print (str(datetime.utcnow()) + " Performance yesterday for " + stk + ": " + str(perf_yesterday))
-					print (str(datetime.utcnow()) + " Performance day before yesterday for " + stk + ": " + str(perf_day_before_yesterday))
-					print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
-					return True
-	return False
-
-def check_sell_opportunity(stk):
-	todays_perf = None
-	weeks_perf = None
-	todays_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','day','regular')", stk)
-	weeks_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','week','regular')", stk)
-	sale_permit = False
-
-	if todays_perf != None and weeks_perf != None:
-		sale_permit = test_short_term_sale(todays_perf, weeks_perf)
-	else:
-		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
-	return sale_permit
-
-def check_expired_sell_opportunity(stk):
-	global expired_stk_grwth_purchase_threshold, total_5minute_intervals_to_check_avg_growth
-	todays_perf = None
-	todays_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','day','regular')", stk)
-	todays_perf_size = len(todays_perf['historicals'])
-
-	if todays_perf != None:
-		avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
-		if (avg_growth <= expired_stk_grwth_purchase_threshold):
-			print (str(datetime.utcnow()) + " Expired Stock ready to be sold: " + stk)
-			print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
-			return True
-	else:
-		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+		perf_today, perf_yesterday, perf_day_before_yesterday = get_three_day_perf(todays_perf,todays_perf_size,weeks_perf,weeks_perf_size)
+		#if stk performance (today or yesterday) and(yesterday or day before) was in range
+		if (perf_today >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]) and (perf_day_before_yesterday >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]):
+			avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)#Avg. % growth of last 50 minutes
+			#if avg growth for last n 5-minute intervals in negative range sell
+			if (avg_growth <= -stk_grwth_purchase_threshold[0] and avg_growth >= -stk_grwth_purchase_threshold[1]):
+				print (str(datetime.utcnow()) + " Stock ready to be sold: " + stk)
+				print (str(datetime.utcnow()) + " Performance today for " + stk + ": " + str(perf_today))
+				print (str(datetime.utcnow()) + " Performance yesterday for " + stk + ": " + str(perf_yesterday))
+				print (str(datetime.utcnow()) + " Performance day before yesterday for " + stk + ": " + str(perf_day_before_yesterday))
+				print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
+				return True
 	return False
 	
 def replace_parameter(old_param, new_param, url):
@@ -380,15 +348,6 @@ def purchase_accounting(last_purchase_time, last_stock, last_stock_quantity, las
 	elif final_stock_price == None:
 		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 			
-def check_stock_expiry_sale(stk, purchase_date, purchase_price):
-	current_price = float(robinhood_calls("last_trade_price('" + stk + "')", stk)[0][0])
-	gain = (sale_price-purchase_price)/purchase_price
-	number_of_days = abs((datetime.utcnow().date() - purchase_date).days)
-
-	if ((number_of_days > 45) or (number_of_days > 30 and gain >= 0.0) or (number_of_days > 12 and gain >= 0.1)):
-		return True
-	return False
-
 def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
 	sale_price = 0.0
 	sale_price = float(robinhood_calls("last_trade_price('" + stk[stk_idx] + "')", stk[stk_idx])[0][0])
@@ -398,10 +357,10 @@ def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
 		sale_logger(free_cash, stk_idx, len(stk))
 
 		sale_gain = 100.0*(sale_price-purchase_price)/purchase_price
-		print (str(datetime.utcnow()) + " Stock sold: " + stk[stk_idx] + ", Profit % made: " + str(sale_gain))
-		with open('daily_activity_log.txt', 'a`') as f:
+		print (str(datetime.utcnow()) + " Stock sold: " + stk[stk_idx] + ", Purchase Price: " + str(purchase_price) + ", Sale Price: " + str(sale_price) + ", Profit % made: " + str(sale_gain))
+		with open('daily_activity_log.txt', 'a') as f:
 			f.writelines(str(datetime.utcnow()) + " Stock sold: " + stk[stk_idx] + ", Profit % made: " + str(sale_gain) + '\n')
-		send_email(str(datetime.utcnow()) + " Stock sold: " + stk[stk_idx] + ", Profit % made: " + str(sale_gain))
+		send_email(str(datetime.utcnow()) + " Stock sold: " + stk[stk_idx] + ", Purchase Price: " + str(purchase_price) + ", Sale Price: " + str(sale_price) + ", Profit % made: " + str(sale_gain) + ", Free Cash: " + str(free_cash))
 		print (str(datetime.utcnow()) + " Free cash left: " + str(free_cash))
 
 	elif sale_price == None:
@@ -461,6 +420,39 @@ def get_param_val(param, end, page_source):#parame = keyword/start,end = end
 		else:
 			return_val = None
 		return return_val
+
+def check_sell_opportunity(stk, todays_perf,todays_perf_size):
+	weeks_perf = None
+	weeks_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','week','regular')", stk)
+	sale_permit = False
+
+	if weeks_perf != None:
+		sale_permit = test_short_term_sale(todays_perf, weeks_perf,todays_perf_size)
+	else:
+		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+	return sale_permit
+
+def check_expired_sell_opportunity(stk, todays_perf):
+	global expired_stk_grwth_purchase_threshold, total_5minute_intervals_to_check_avg_growth
+	todays_perf_size = len(todays_perf['historicals'])
+
+	avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
+	if (avg_growth <= expired_stk_grwth_purchase_threshold):
+		print (str(datetime.utcnow()) + " Expired Stock ready to be sold: " + stk)
+		print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
+		return True
+	else:
+		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
+	return False
+
+def check_stock_expiry_sale(stk, purchase_date, purchase_price):
+	current_price = float(robinhood_calls("last_trade_price('" + stk + "')", stk)[0][0])
+	gain = (current_price-purchase_price)/purchase_price
+	number_of_days = abs((datetime.utcnow().date() - purchase_date.date()).days)
+
+	if ((number_of_days > 45) or (number_of_days > 30 and gain >= 0.0) or (number_of_days > 12 and gain >= 0.1)):
+		return True
+	return False
 
 def check_stk_sale(stk):
 	sale_flag = False
@@ -564,9 +556,14 @@ if __name__ == '__main__':
 			for i in range(0,len(last_stock)):#Check if any stocks ready for sale
 				if i < len(last_stock):
 					if datetime.utcnow().date() != last_purchase_time[i].date():
-						if ((check_stk_sale(last_stock[i]) and check_sell_opportunity(last_stock[i])) or (check_stock_expiry_sale(last_stock[i],last_purchase_time[i],last_stock_purchase_price[i]) and check_expired_sell_opportunity(last_stock[i]))):
-							sale_accounting(last_stock, last_stock_quantity[i], last_stock_purchase_price[i], free_cash, i)
-							last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader()
+						todays_perf = None
+						todays_perf = robinhood_calls("get_historical_quotes('" + last_stock[i] + "','5minute','day','regular')", last_stock[i])
+						if todays_perf != None:
+							todays_perf_size = len(todays_perf['historicals'])
+							last_date_stamp = datetime.strptime(todays_perf['historicals'][todays_perf_size-1]['begins_at'], '%Y-%m-%dT%H:%M:%SZ').date()
+							if last_date_stamp == datetime.utcnow().date() and ((check_stk_sale(last_stock[i]) and check_sell_opportunity(last_stock[i],todays_perf,todays_perf_size)) or (check_stock_expiry_sale(last_stock[i],last_purchase_time[i],last_stock_purchase_price[i]) and check_expired_sell_opportunity(last_stock[i],todays_perf))):
+								sale_accounting(last_stock, last_stock_quantity[i], last_stock_purchase_price[i], free_cash, i)
+								last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader()
 			final_stock = optimize(last_stock,last_purchase_time, avail_cash, re_purchase)#Retreive latest batch of buy-able stocks
 			for i in range(0,len(final_stock)):#Check if any stocks ready for purchase
 				if final_stock[i] not in new_stocks_found:
