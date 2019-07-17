@@ -303,9 +303,9 @@ def time_to_sleep():
 	minute = datetime.utcnow().minute
 	second = datetime.utcnow().second
 	tts = 300
-	if (day in range(1,6)) and (hour in range(13,21)):#mon-fri 1310pm-20pm, UTC, run every 5 minutes
+	if (day in range(1,6)) and (hour in range(13,23)):#mon-fri 1310pm-23pm, UTC, run every 5 minutes
 		tts = 300
-	elif (day in range(1,6)) and (hour > 21):#mon-fri 20pm-13pm, UTC, sleep till 1310 pm
+	elif (day in range(1,6)) and (hour > 22):#mon-fri 20pm-13pm, UTC, sleep till 1310 pm
 		tts = (37 - hour)*3600 - minute*60 - second + 600
 	elif (day in range(1,6)) and (hour < 13):#mon-fri pre-13pm, UTC, sleep till 1310 pm
 		tts = (13-hour)*3600 - minute*60 - second + 600
@@ -547,7 +547,7 @@ if __name__ == '__main__':
 		start_time = datetime.utcnow()
 		
 		#if True:
-		if (datetime.utcnow().isoweekday() in range(1,6)) and datetime.utcnow().time() > datetime.strptime('13:39','%H:%M').time() and datetime.utcnow().time() < datetime.strptime('20:01','%H:%M').time():
+		if (datetime.utcnow().isoweekday() in range(1,6)) and datetime.utcnow().time() > datetime.strptime('13:09','%H:%M').time() and datetime.utcnow().time() < datetime.strptime('22:01','%H:%M').time():
 			for i in range(0,len(last_stock)):#Check if any stocks ready for sale
 				if i < len(last_stock):
 					if datetime.utcnow().date() != last_purchase_time[i].date():
