@@ -48,20 +48,18 @@ my_trader = Robinhood()
 my_trader.login(username=user_ids[0], password=user_ids[1])
 
 def robinhood_calls(command, stk):
-	exec_flag = False
 	value_to_return = None
 	try_counter = 0
 	executable = "value_to_return = my_trader." + command
-	while exec_flag == False and try_counter < 10:
+	while value_to_return == None and try_counter < 5:
 		try:
 			exec(executable)
-			exec_flag = True
 		except Exception:
 			import traceback
 			print (str(datetime.utcnow()) + ' ***ROBINHOOD CALL EXCEPTION***: ' + stk + ", " + command + ", " + traceback.format_exc() + ": Waiting for 10 seconds before re-attempting..")
 			try_counter = try_counter + 1
-			time.sleep(10)
-			if try_counter == 10:
+			time.sleep(5)
+			if try_counter == 5:
 				send_email(str(datetime.utcnow()) + ": App crashed in func. robinhood calls while processing command: " + command + " for stock " + stk + " with error: " + traceback.format_exc())
 	return value_to_return
 		
@@ -268,9 +266,9 @@ def last_state_reader():
 				last_stock_quantity.append(float(holdings_array[2][j]))
 				last_stock_purchase_price.append(float(holdings_array[3][j]))
 				re_purchasable.append(0.0)
-				last_stock_present_price = 0.0
-				last_stock_present_price = float(robinhood_calls("last_trade_price('" + last_stock[j] + "')", last_stock[j])[0][0])
-				if last_stock_present_price != None and last_stock_present_price > 0.0:
+				last_stock_data = robinhood_calls("last_trade_price('" + last_stock[j] + "')", last_stock[j])
+				if last_stock_data != None:
+					last_stock_present_price = float(last_stock_data[0][0])
 					stk_value = last_stock_quantity[j] * last_stock_present_price
 					new_balance = new_balance + stk_value
 					gains_since_stk_purchase = 100.0*(last_stock_present_price - last_stock_purchase_price[j])/last_stock_purchase_price[j]
@@ -282,7 +280,7 @@ def last_state_reader():
 					if stk_value < min(scrap_stk_threshold, 0.05*(new_balance)):
 						scrap_stox += 1
 						re_purchasable[j] = 1.0
-				elif last_stock_present_price == None:
+				else:
 					print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 			avail_cash = free_cash / max (max_stx_to_hold - len(holdings_array[0]) + scrap_stox,  1)
 
@@ -326,33 +324,32 @@ def time_to_sleep():
 def purchase_accounting(last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, avail_cash, final_stock):
 	global my_trader, new_stocks_found
 
-	final_stock_price = 0.0
-	final_stock_price = float(robinhood_calls("last_trade_price('" + final_stock + "')", final_stock)[0][0])
-
-	if final_stock_price != None and final_stock_price > 0.0:
+	final_stock_data = robinhood_calls("last_trade_price('" + final_stock + "')", final_stock)
+	if final_stock_data != None:
+		final_stock_price = float(final_stock_data[0][0])
 		total_stocks = math.floor(avail_cash/final_stock_price)
 		if total_stocks > 0.0:
 			final_purchase_amount = final_stock_price * total_stocks
 			free_cash = free_cash - final_purchase_amount
 
 			purchase_logger(final_stock, total_stocks, final_stock_price, free_cash)
-			print (str(datetime.utcnow()) + " Stock purchased: " + final_stock + ", Total stocks: " + str(total_stocks) + ", Final purchase amount: " + str(final_purchase_amount))
+			print (str(datetime.utcnow()) + " Stock purchased: " + final_stock + ", Total stocks: " + str(total_stocks) + ", Final purchase amount: " + str(final_purchase_amount) + ", Purchase price: " + str(final_stock_price))
 			with open('daily_activity_log.txt', 'a`') as f:
 				f.writelines(str(datetime.utcnow()) + " Stock purchased: " + final_stock + ", Total stocks: " + str(total_stocks) + ", Final purchase amount: " + str(final_purchase_amount) + '\n')
-			send_email(str(datetime.utcnow()) + " Stock purchased: " + final_stock + ", Total stocks: " + str(total_stocks) + ", Final purchase amount: " + str(final_purchase_amount))
+			send_email(str(datetime.utcnow()) + " Stock purchased: " + final_stock + ", Total stocks: " + str(total_stocks) + ", Final purchase amount: " + str(final_purchase_amount) + " Free cash left: " + str(free_cash) + ", Purchase price: " + str(final_stock_price))
 			print (str(datetime.utcnow()) + " Free cash left: " + str(free_cash))
 			if final_stock in new_stocks_found:#Remove purchased stock from new_stocks_found
 				new_stocks_found.remove(final_stock)
 		else:
 			print (str(datetime.utcnow()) + "Not enough cash left to buy " + final_stock)
-	elif final_stock_price == None:
+	else:
 		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 			
 def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
-	sale_price = 0.0
-	sale_price = float(robinhood_calls("last_trade_price('" + stk[stk_idx] + "')", stk[stk_idx])[0][0])
+	sale_data = robinhood_calls("last_trade_price('" + stk[stk_idx] + "')", stk[stk_idx])
 
-	if sale_price != None and sale_price > 0.0:
+	if sale_data != None:
+		sale_price = float(sale_data[0][0])
 		free_cash = free_cash + float(count) * sale_price
 		sale_logger(free_cash, stk_idx, len(stk))
 
@@ -362,8 +359,7 @@ def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
 			f.writelines(str(datetime.utcnow()) + " Stock sold: " + stk[stk_idx] + ", Profit % made: " + str(sale_gain) + '\n')
 		send_email(str(datetime.utcnow()) + " Stock sold: " + stk[stk_idx] + ", Purchase Price: " + str(purchase_price) + ", Sale Price: " + str(sale_price) + ", Profit % made: " + str(sale_gain) + ", Free Cash: " + str(free_cash))
 		print (str(datetime.utcnow()) + " Free cash left: " + str(free_cash))
-
-	elif sale_price == None:
+	else:
 		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 
 def result_check(url,last_stock,free_cash,re_purchase):
@@ -381,9 +377,10 @@ def result_check(url,last_stock,free_cash,re_purchase):
 			stk, sector = get_stock_name(page_source)
 			for i in range(0,11):
 				page_source = page_source.replace(str("quote.ashx?t=" + stk + "&ty=c&p=d&b=1"),"")#Delete first stock from page source string to arrive at next stock
-			final_stock_price = float(robinhood_calls("last_trade_price('" + stk + "')", stk)[0][0])
-			if final_stock_price != None and final_stock_price <= free_cash:#Proceed only if stock price lower than available cash
-				if stk not in new_stocks_found:
+			final_stock_data = robinhood_calls("last_trade_price('" + stk + "')", stk)
+			if final_stock_data != None:
+				final_stock_price = float(final_stock_data[0][0])
+				if (final_stock_price <= free_cash and (stk not in new_stocks_found)):#Proceed only if stock price lower than available cash
 					json_obj = robinhood_calls("instruments('" + stk + "')", stk)
 
 					if json_obj != None:
@@ -400,7 +397,7 @@ def result_check(url,last_stock,free_cash,re_purchase):
 
 				elif stk not in last_stock or re_purchase[last_stock.index(stk)] == 1.0:
 					stock.append(stk)
-			elif final_stock_price == None:
+			else:
 				print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	elif page_source == None: 
 		print str(datetime.utcnow()) + " Finviz Data retrieve failed @ " + str(inspect.stack()[0][3])
@@ -422,7 +419,6 @@ def get_param_val(param, end, page_source):#parame = keyword/start,end = end
 		return return_val
 
 def check_sell_opportunity(stk, todays_perf,todays_perf_size):
-	weeks_perf = None
 	weeks_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','week','regular')", stk)
 	sale_permit = False
 
@@ -551,7 +547,7 @@ if __name__ == '__main__':
 		start_time = datetime.utcnow()
 		
 		#if True:
-		if (datetime.utcnow().isoweekday() in range(1,6)) and datetime.utcnow().time() > datetime.strptime('13:39','%H:%M').time() and datetime.utcnow().time() < datetime.strptime('21:01','%H:%M').time():
+		if (datetime.utcnow().isoweekday() in range(1,6)) and datetime.utcnow().time() > datetime.strptime('13:39','%H:%M').time() and datetime.utcnow().time() < datetime.strptime('20:01','%H:%M').time():
 			for i in range(0,len(last_stock)):#Check if any stocks ready for sale
 				if i < len(last_stock):
 					if datetime.utcnow().date() != last_purchase_time[i].date():
