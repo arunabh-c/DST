@@ -23,6 +23,7 @@ total_5minute_intervals_to_check_avg_growth = 10
 scrap_stk_threshold = 50.0
 new_stocks_found = []
 suffix = "\033[0m"
+last_two_days_perf_dict = {}
 
 with open('select_order.csv', 'rb') as f:
 		reader = csv.reader(f)
@@ -56,7 +57,7 @@ def robinhood_calls(command, stk):
 			exec(executable)
 		except Exception:
 			import traceback
-			print (str(datetime.utcnow()) + ' ***ROBINHOOD CALL EXCEPTION***: ' + stk + ", " + command + ", " + traceback.format_exc() + ": Waiting for 10 seconds before re-attempting..")
+			print (str(datetime.utcnow()) + ' ***ROBINHOOD CALL EXCEPTION***: ' + stk + ", " + command + ", " + traceback.format_exc() + ": Waiting for 5 seconds before re-attempting..")
 			try_counter = try_counter + 1
 			time.sleep(5)
 			if try_counter == 5:
@@ -67,7 +68,7 @@ def finviz_calls(url):
 	exec_flag = False
 	page_source = None
 	try_counter = 0
-	while exec_flag == False and try_counter < 10:
+	while exec_flag == False and try_counter < 5:
 		try:
 			req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"}) 
 			response = urllib2.urlopen(req)
@@ -75,10 +76,10 @@ def finviz_calls(url):
 			exec_flag = True
 		except Exception:
 			import traceback
-			print (str(datetime.utcnow()) + ' ***FINVIZ CALL EXCEPTION***: ' + traceback.format_exc() + ": Waiting for 10 seconds before re-attempting..")
+			print (str(datetime.utcnow()) + ' ***FINVIZ CALL EXCEPTION***: ' + traceback.format_exc() + ": Waiting for 5 seconds before re-attempting..")
 			try_counter = try_counter + 1
-			time.sleep(10)
-			if try_counter == 10:
+			time.sleep(5)
+			if try_counter == 5:
 				send_email(str(datetime.utcnow()) + ": App crashed in func. finviz_calls while processing command with exception: " + traceback.format_exc())
 	return page_source
 		
@@ -102,32 +103,45 @@ def get_avg_growth(historicals, todays_perf_size):
 		avg_growth = avg_growth + 10.0*(float(historicals[todays_perf_size-1-i]['close_price']) - float(historicals[todays_perf_size-2-i]['close_price']))/(float(historicals[todays_perf_size-2-i]['close_price']))
 	return avg_growth
 
-def get_three_day_perf(today,today_size,week,week_size):
+def get_three_day_perf(today,today_size,stk):
+	global last_two_days_perf_dict
 	close_price_right_now = float(today['historicals'][today_size-1]['close_price'])
-	yesterday_close_price = float(week['historicals'][week_size-today_size-1]['close_price'])
-	day_before_yesterday_close_price = float(week['historicals'][week_size-today_size-79]['close_price'])
-	day_before_day_before_yesterday_close_price = float(week['historicals'][week_size-today_size-157]['close_price'])
-	perf_today = 100.0 * (close_price_right_now - yesterday_close_price)/yesterday_close_price
-	perf_yesterday = 100.0 * (yesterday_close_price - day_before_yesterday_close_price)/day_before_yesterday_close_price
-	perf_day_before = 100.0 * (day_before_yesterday_close_price - day_before_day_before_yesterday_close_price)/day_before_day_before_yesterday_close_price
+
+	perf_today = perf_yesterday = perf_day_before = None
+	if stk in last_two_days_perf_dict.keys():
+		yesterday_close_price = last_two_days_perf_dict[stk][0]
+		perf_today = 100.0 * (close_price_right_now - yesterday_close_price)/yesterday_close_price
+		perf_yesterday = last_two_days_perf_dict[stk][1]
+		perf_day_before = last_two_days_perf_dict[stk][2]
+		return perf_today, perf_yesterday, perf_day_before
+
+	week = robinhood_calls("get_historical_quotes('" + stk + "','5minute','week','regular')", stk)
+	if week != None:
+		week_size = len(week['historicals'])
+
+		yesterday_close_price = float(week['historicals'][week_size-today_size-1]['close_price'])
+		day_before_yesterday_close_price = float(week['historicals'][week_size-today_size-79]['close_price'])
+		day_before_day_before_yesterday_close_price = float(week['historicals'][week_size-today_size-157]['close_price'])
+
+		perf_today = 100.0 * (close_price_right_now - yesterday_close_price)/yesterday_close_price
+		perf_yesterday = 100.0 * (yesterday_close_price - day_before_yesterday_close_price)/day_before_yesterday_close_price
+		perf_day_before = 100.0 * (day_before_yesterday_close_price - day_before_day_before_yesterday_close_price)/day_before_day_before_yesterday_close_price
+		last_two_days_perf_dict[stk] = [yesterday_close_price,perf_yesterday,perf_day_before]
 	return perf_today, perf_yesterday, perf_day_before
 
 def check_buy_opportunity(stk):
 	global stk_grwth_purchase_threshold, total_5minute_intervals_to_check_avg_growth
 	todays_perf = None
-	weeks_perf = None
 	todays_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','day','regular')", stk)
-	weeks_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','week','regular')", stk)
 
-	if todays_perf != None and weeks_perf != None:
+	if todays_perf != None:
 		todays_perf_size = 0
 		todays_perf_size = len(todays_perf['historicals'])
-		weeks_perf_size = len(weeks_perf['historicals'])
 		if todays_perf_size > 11:
 			last_date_stamp = datetime.strptime(todays_perf['historicals'][todays_perf_size-1]['begins_at'], '%Y-%m-%dT%H:%M:%SZ').date()
 			if last_date_stamp == datetime.utcnow().date():#Avg. % growth of last 50 minutes
-				perf_today, perf_yesterday, perf_day_before_yesterday = get_three_day_perf(todays_perf,todays_perf_size,weeks_perf,weeks_perf_size)
-				if (perf_today <= stk_grwth_purchase_threshold[0] or perf_yesterday <= stk_grwth_purchase_threshold[0]) and (perf_yesterday <= stk_grwth_purchase_threshold[0] or perf_day_before_yesterday <= stk_grwth_purchase_threshold[0]):
+				perf_today, perf_yesterday, perf_day_before_yesterday = get_three_day_perf(todays_perf,todays_perf_size,stk)
+				if (perf_today != None) and (perf_today <= stk_grwth_purchase_threshold[0] or perf_yesterday <= stk_grwth_purchase_threshold[0]) and (perf_yesterday <= stk_grwth_purchase_threshold[0] or perf_day_before_yesterday <= stk_grwth_purchase_threshold[0]):
 					avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
 					if (avg_growth >= stk_grwth_purchase_threshold[0] and avg_growth <= stk_grwth_purchase_threshold[1]):
 						print (str(datetime.utcnow()) + " Stock ready to be purchased: " + stk)
@@ -140,14 +154,13 @@ def check_buy_opportunity(stk):
 		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	return False
 
-def test_short_term_sale(todays_perf, weeks_perf, todays_perf_size):
+def check_sell_opportunity(stk, todays_perf,todays_perf_size):
 	global stk_grwth_purchase_threshold, total_5minute_intervals_to_check_avg_growth
 
-	weeks_perf_size = len(weeks_perf['historicals'])
 	if todays_perf_size > 11:
-		perf_today, perf_yesterday, perf_day_before_yesterday = get_three_day_perf(todays_perf,todays_perf_size,weeks_perf,weeks_perf_size)
+		perf_today, perf_yesterday, perf_day_before_yesterday = get_three_day_perf(todays_perf,todays_perf_size,stk)
 		#if stk performance (today or yesterday) and(yesterday or day before) was in range
-		if (perf_today >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]) and (perf_day_before_yesterday >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]):
+		if (perf_today != None) and (perf_today >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]) and (perf_day_before_yesterday >= stk_grwth_purchase_threshold[0] or perf_yesterday >= stk_grwth_purchase_threshold[0]):
 			avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)#Avg. % growth of last 50 minutes
 			#if avg growth for last n 5-minute intervals in negative range sell
 			if (avg_growth <= -stk_grwth_purchase_threshold[0] and avg_growth >= -stk_grwth_purchase_threshold[1]):
@@ -418,16 +431,6 @@ def get_param_val(param, end, page_source):#parame = keyword/start,end = end
 			return_val = None
 		return return_val
 
-def check_sell_opportunity(stk, todays_perf,todays_perf_size):
-	weeks_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','week','regular')", stk)
-	sale_permit = False
-
-	if weeks_perf != None:
-		sale_permit = test_short_term_sale(todays_perf, weeks_perf,todays_perf_size)
-	else:
-		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
-	return sale_permit
-
 def check_expired_sell_opportunity(stk, todays_perf):
 	global expired_stk_grwth_purchase_threshold, total_5minute_intervals_to_check_avg_growth
 	todays_perf_size = len(todays_perf['historicals'])
@@ -541,8 +544,10 @@ def optimize(last_stock,last_purchase_time,free_cash,re_purchase):
 
 if __name__ == '__main__':
 	print (str(datetime.utcnow()) + ": Starting Loop..")
+
 	last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader() 
 	new_stocks_start_time = datetime.utcnow()
+	
 	while True:
 		start_time = datetime.utcnow()
 		
@@ -576,4 +581,5 @@ if __name__ == '__main__':
 		compute_time = (datetime.utcnow() - start_time).seconds + (datetime.utcnow() - start_time).microseconds/1000000.0
 		time.sleep(sleep_duration-compute_time)
 		if sleep_duration > 300:
+			last_two_days_perf_dict.clear()
 			print datetime.utcnow().date()
