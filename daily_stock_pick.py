@@ -560,10 +560,11 @@ if __name__ == '__main__':
 						todays_perf = robinhood_calls("get_historical_quotes('" + last_stock[i] + "','5minute','day','regular')", last_stock[i])
 						if todays_perf != None:
 							todays_perf_size = len(todays_perf['historicals'])
-							last_date_stamp = datetime.strptime(todays_perf['historicals'][todays_perf_size-1]['begins_at'], '%Y-%m-%dT%H:%M:%SZ').date()
-							if last_date_stamp == datetime.utcnow().date() and ((check_stk_sale(last_stock[i]) and check_sell_opportunity(last_stock[i],todays_perf,todays_perf_size)) or (check_stock_expiry_sale(last_stock[i],last_purchase_time[i],last_stock_purchase_price[i]) and check_expired_sell_opportunity(last_stock[i],todays_perf))):
-								sale_accounting(last_stock, last_stock_quantity[i], last_stock_purchase_price[i], free_cash, i)
-								last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader()
+							if todays_perf_size > 0:
+								last_date_stamp = datetime.strptime(todays_perf['historicals'][todays_perf_size-1]['begins_at'], '%Y-%m-%dT%H:%M:%SZ').date()
+								if last_date_stamp == datetime.utcnow().date() and ((check_stk_sale(last_stock[i]) and check_sell_opportunity(last_stock[i],todays_perf,todays_perf_size)) or (check_stock_expiry_sale(last_stock[i],last_purchase_time[i],last_stock_purchase_price[i]) and check_expired_sell_opportunity(last_stock[i],todays_perf))):
+									sale_accounting(last_stock, last_stock_quantity[i], last_stock_purchase_price[i], free_cash, i)
+									last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader()
 			final_stock = optimize(last_stock,last_purchase_time, avail_cash, re_purchase)#Retreive latest batch of buy-able stocks
 			for i in range(0,len(final_stock)):#Check if any stocks ready for purchase
 				if final_stock[i] not in new_stocks_found:
