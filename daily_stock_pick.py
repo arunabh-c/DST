@@ -24,6 +24,7 @@ scrap_stk_threshold = 50.0
 new_stocks_found = []
 suffix = "\033[0m"
 last_two_days_perf_dict = {}
+min_query_interval = 300
 
 with open('select_order.csv', 'rb') as f:
 		reader = csv.reader(f)
@@ -315,16 +316,16 @@ def time_to_sleep():
 	hour =  datetime.utcnow().hour
 	minute = datetime.utcnow().minute
 	second = datetime.utcnow().second
-	tts = 300
+	tts = min_query_interval
 	if (day in range(1,6)) and (hour in range(13,23)):#mon-fri 1310pm-23pm, UTC, run every 5 minutes
-		tts = 300
+		tts = min_query_interval
 	elif (day in range(1,6)) and (hour > 22):#mon-fri 20pm-13pm, UTC, sleep till 1310 pm
 		tts = (37 - hour)*3600 - minute*60 - second + 600
 	elif (day in range(1,6)) and (hour < 13):#mon-fri pre-13pm, UTC, sleep till 1310 pm
 		tts = (13-hour)*3600 - minute*60 - second + 600
 	elif (day > 5):#weekend, sleep till monday 1310pm
 		tts = (7-day)*24*3600 + (37-hour)*3600 - minute*60 - second + 600
-	if tts > 300:
+	if tts > min_query_interval:
 		_, _, _, _, _, _, _, _ = last_state_reader()
 		d = datetime(1,1,1) + timedelta(seconds=tts)
 		print("Sleeping for ")
@@ -580,7 +581,7 @@ if __name__ == '__main__':
 
 		sleep_duration = time_to_sleep()
 		compute_time = (datetime.utcnow() - start_time).seconds + (datetime.utcnow() - start_time).microseconds/1000000.0
-		time.sleep(sleep_duration-compute_time)
+		time.sleep(max(0,sleep_duration-compute_time))
 		if sleep_duration > 300:
 			last_two_days_perf_dict.clear()
 			print datetime.utcnow().date()
