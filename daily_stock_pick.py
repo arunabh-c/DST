@@ -50,6 +50,7 @@ my_trader = Robinhood()
 my_trader.login(username=user_ids[0], password=user_ids[1])
 
 def robinhood_calls(command, stk):
+	global my_trader, user_ids
 	value_to_return = None
 	try_counter = 0
 	executable = "value_to_return = my_trader." + command
@@ -59,6 +60,7 @@ def robinhood_calls(command, stk):
 		except Exception:
 			import traceback
 			print (str(datetime.utcnow()) + ' ***ROBINHOOD CALL EXCEPTION***: ' + stk + ", " + command + ", " + traceback.format_exc() + ": Waiting for 5 seconds before re-attempting..")
+			my_trader.login(username=user_ids[0], password=user_ids[1])
 			try_counter = try_counter + 1
 			time.sleep(5)
 			if try_counter == 5:
