@@ -49,6 +49,23 @@ with open('urls.txt') as f:
 my_trader = Robinhood()
 my_trader.login(username=user_ids[0], password=user_ids[1])
 
+def robinhood_login(user,passw):
+	mt = None
+	try:
+		mt = Robinhood()
+		mt.login(user, passw)
+	except Exception:
+		print (str(datetime.utcnow()) + ' ***ROBINHOOD LOGIN EXCEPTION***: ' + traceback.format_exc())
+		send_email(str(datetime.utcnow()) + ": Unable to login into robinhood with error: " + traceback.format_exc())
+	return mt
+
+def robinhood_logout(mt):
+	try:
+		mt.logout()
+	except Exception:
+		print (str(datetime.utcnow()) + ' ***ROBINHOOD LOGOUT EXCEPTION***: ' + traceback.format_exc())
+		send_email(str(datetime.utcnow()) + ": Unable to logout from robinhood with error: " + traceback.format_exc())
+
 def robinhood_calls(command, stk):
 	global my_trader, user_ids
 	value_to_return = None
@@ -60,7 +77,6 @@ def robinhood_calls(command, stk):
 		except Exception:
 			import traceback
 			print (str(datetime.utcnow()) + ' ***ROBINHOOD CALL EXCEPTION***: ' + stk + ", " + command + ", " + traceback.format_exc() + ": Waiting for 5 seconds before re-attempting..")
-			my_trader.login(username=user_ids[0], password=user_ids[1])
 			try_counter = try_counter + 1
 			time.sleep(5)
 			if try_counter == 5:
@@ -335,6 +351,7 @@ def time_to_sleep():
 		d = datetime.utcnow() + timedelta(seconds=tts)
 		print("Wake up at " + d.strftime("%A"))
 		print("%02d:%02d:%02d" % (d.hour, d.minute, d.second))
+		my_trader.logout()
 	return tts
 
 def purchase_accounting(last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, avail_cash, final_stock):
@@ -554,8 +571,8 @@ if __name__ == '__main__':
 	while True:
 		start_time = datetime.utcnow()
 		
-		#if True:
-		if (datetime.utcnow().isoweekday() in range(1,6)) and datetime.utcnow().time() > datetime.strptime('13:09','%H:%M').time() and datetime.utcnow().time() < datetime.strptime('22:01','%H:%M').time():
+		if True:
+		#if (datetime.utcnow().isoweekday() in range(1,6)) and datetime.utcnow().time() > datetime.strptime('13:09','%H:%M').time() and datetime.utcnow().time() < datetime.strptime('22:01','%H:%M').time():
 			for i in range(0,len(last_stock)):#Check if any stocks ready for sale
 				if i < len(last_stock):
 					if datetime.utcnow().date() != last_purchase_time[i].date():
@@ -586,4 +603,5 @@ if __name__ == '__main__':
 		time.sleep(max(0,sleep_duration-compute_time))
 		if sleep_duration > 300:
 			last_two_days_perf_dict.clear()
+			my_trader.login(username=user_ids[0], password=user_ids[1])
 			print datetime.utcnow().date()
