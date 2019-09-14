@@ -379,7 +379,7 @@ def purchase_accounting(last_purchase_time, last_stock, last_stock_quantity, las
 			
 def check_stock_expiry_sale(stk, purchase_date, purchase_price):
 	current_price = float(robinhood_calls("last_trade_price('" + stk + "')", stk)[0][0])
-	gain = (sale_price-purchase_price)/purchase_price
+	gain = (current_price-purchase_price)/purchase_price
 	number_of_days = abs((datetime.now().date() - purchase_date).days)
 
 	if ((number_of_days > 45) or (number_of_days > 30 and gain >= 0.0) or (number_of_days > 12 and gain >= 0.1)):
