@@ -178,16 +178,19 @@ def check_sell_opportunity(stk):
 		print str(datetime.now()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	return sale_permit
 
-def check_expired_sell_opportunity(stk, todays_perf):
+def check_expired_sell_opportunity(stk):
 	global expired_stk_grwth_purchase_threshold, total_5minute_intervals_to_check_avg_growth
-	todays_perf_size = len(todays_perf['historicals'])
-
-	if todays_perf_size > 11:
-		avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
-		if (avg_growth <= expired_stk_grwth_purchase_threshold):
-			print (str(datetime.utcnow()) + " Expired Stock ready to be sold: " + stk)
-			print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
-			return True
+	todays_perf = None
+	todays_perf = robinhood_calls("get_historical_quotes('" + stk + "','5minute','day','regular')", stk)
+	
+	if todays_perf != None:
+		todays_perf_size = len(todays_perf['historicals'])
+		if todays_perf_size > 11:
+			avg_growth = get_avg_growth(todays_perf['historicals'], todays_perf_size)
+			if (avg_growth <= expired_stk_grwth_purchase_threshold):
+				print (str(datetime.utcnow()) + " Expired Stock ready to be sold: " + stk)
+				print (str(datetime.utcnow()) + " Last " + str(5*total_5minute_intervals_to_check_avg_growth) + " minutes growth for " + stk + ": " + str(avg_growth))
+				return True
 	return False
 	
 def replace_parameter(old_param, new_param, url):
@@ -382,7 +385,7 @@ def check_stock_expiry_sale(stk, purchase_date, purchase_price):
 	if stock_quote != None:
 		current_price = float(stock_quote[0][0])
 		gain = (current_price-purchase_price)/purchase_price
-		number_of_days = abs((datetime.now().date() - purchase_date).days)
+		number_of_days = abs((datetime.now() - purchase_date).days)
 		if ((number_of_days > 45) or (number_of_days > 30 and gain >= 0.0) or (number_of_days > 12 and gain >= 0.1)):
 			return True
 	return False
@@ -397,7 +400,7 @@ def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
 
 		sale_gain = 100.0*(sale_price-purchase_price)/purchase_price
 		print (str(datetime.now()) + " Stock sold: " + stk[stk_idx] + ", Profit % made: " + str(sale_gain))
-		with open('daily_activity_log.txt', 'a`') as f:
+		with open('daily_activity_log.txt', 'a') as f:
 			f.writelines(str(datetime.now()) + " Stock sold: " + stk[stk_idx] + ", Profit % made: " + str(sale_gain) + '\n')
 		send_email(str(datetime.now()) + " Stock sold: " + stk[stk_idx] + ", Profit % made: " + str(sale_gain))
 		print (str(datetime.now()) + " Free cash left: " + str(free_cash))
@@ -518,7 +521,6 @@ def optimize(last_stock,last_purchase_time,free_cash,re_purchase):
 		tmp_stock = result_check(url,last_stock,free_cash,re_purchase)
 		extra_param_rows = 0
 
-		print tmp_stock
 		while extra_param_rows < len(extra_filters):#Add filters for PEG ratio/PE ratio, EPS Growth, Sales Growth if possible
 			extra_param_columns = 0
 			while len(tmp_stock) > 1 and extra_param_columns < len(extra_filters[extra_param_rows]):
@@ -556,6 +558,7 @@ if __name__ == '__main__':
 	new_stocks_start_time = datetime.now()
 	while True:
 		start_time = datetime.now()
+		
 		
 		#if True:
 		if (datetime.now().isoweekday() in range(1,6)) and datetime.now().time() > datetime.strptime('6:09','%H:%M').time() and datetime.now().time() < datetime.strptime('14:01','%H:%M').time():
