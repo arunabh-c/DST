@@ -339,12 +339,13 @@ def time_to_sleep():
 	minute = datetime.utcnow().minute
 	second = datetime.utcnow().second
 	tts = 300
-	if (day in range(1,6)) and (hour in range(14,22)):#mon-fri 910am-3pm, run every 5 minutes
-		tts = 300
-	elif (day in range(1,6)) and (hour > 22):#mon-fri 3pm-12am, sleep till 910 am
-		tts = (16 - hour)*3600 - minute*60 - second + 600
-	elif (day in range(1,6)) and (hour < 14):#mon-fri pre-8am, sleep till 910 am
-		tts = (14-hour)*3600 - minute*60 - second + 600
+	if (day in range(1,6)):
+		if (hour in range(14,23)):
+			tts = 300
+		elif (hour > 22):#mon-fri 3pm-12am, sleep till 910 am
+			tts = (16 - hour)*3600 - minute*60 - second + 600
+		elif (hour < 14):#mon-fri pre-8am, sleep till 910 am
+			tts = (14-hour)*3600 - minute*60 - second + 600
 	elif (day > 5):#weekend, sleep till monday 910am
 		tts = (7-day)*24*3600 + (38-hour)*3600 - minute*60 - second + 600
 	if tts > 300:
