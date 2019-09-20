@@ -287,7 +287,7 @@ def last_state_reader():
 		try:
 			row_counter = 0
 			for line in f:
-				if row_counter < 4:
+				if ((row_counter < 4) and line != '\n'):
 					holdings_array[row_counter] = (line.rstrip('\n')).split(",")
 				if row_counter == 4:
 					free_cash = float(line.rstrip('\n'))
