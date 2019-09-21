@@ -343,19 +343,19 @@ def time_to_sleep():
 		if (hour in range(14,23)):
 			tts = 300
 		elif (hour > 22):#mon-fri 3pm-12am, sleep till 910 am
-			tts = (16 - hour)*3600 - minute*60 - second + 600
+			tts = (38 - hour)*3600 - minute*60 - second + 600
 		elif (hour < 14):#mon-fri pre-8am, sleep till 910 am
 			tts = (14-hour)*3600 - minute*60 - second + 600
 	elif (day > 5):#weekend, sleep till monday 910am
 		tts = (7-day)*24*3600 + (38-hour)*3600 - minute*60 - second + 600
 	if tts > 300:
 		_, _, _, _, _, _, _, _ = last_state_reader()
-		d = datetime(1,1,1) + timedelta(seconds=tts)
-		print("Sleeping for ")
-		print("%d:%d:%d:%d" % (d.day-1, d.hour, d.minute, d.second))
-		d = datetime.utcnow() + timedelta(seconds=tts)
-		print("Wake up at " + d.strftime("%A"))
-		print("%d:%d:%d" % (d.hour, d.minute, d.second))
+		#d = datetime(1,1,1) + timedelta(seconds=tts)
+		#print("Sleeping for ")
+		#print("%d:%d:%d:%d" % (d.day-1, d.hour, d.minute, d.second))
+		#d = datetime.utcnow() + timedelta(seconds=tts)
+		#print("Wake up at " + d.strftime("%A"))
+		#print("%d:%d:%d" % (d.hour, d.minute, d.second))
 	return tts
 
 def purchase_accounting(last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, avail_cash, final_stock):
@@ -586,6 +586,6 @@ if __name__ == '__main__':
 
 		sleep_duration = time_to_sleep()
 		compute_time = (datetime.utcnow() - start_time).seconds + (datetime.utcnow() - start_time).microseconds/1000000.0
-		time.sleep(sleep_duration-compute_time)
+		time.sleep(max(0.1,(sleep_duration-compute_time)))
 		if sleep_duration > 300:
 			print datetime.utcnow().date()
