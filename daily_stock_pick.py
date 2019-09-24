@@ -303,20 +303,22 @@ def last_state_reader():
 				last_stock_purchase_price.append(float(holdings_array[3][j]))
 				re_purchasable.append(0.0)
 				last_stock_present_price = 0.0
-				last_stock_present_price = float(robinhood_calls("last_trade_price('" + last_stock[j] + "')", last_stock[j])[0][0])
-				if last_stock_present_price != None and last_stock_present_price > 0.0:
-					stk_value = last_stock_quantity[j] * last_stock_present_price
-					new_balance = new_balance + stk_value
-					gains_since_stk_purchase = 100.0*(last_stock_present_price - last_stock_purchase_price[j])/last_stock_purchase_price[j]
-					if gains_since_stk_purchase >= 0.0:
-						prefix = "\033[1;32;40m "
-					else:
-						prefix = "\033[1;31;40m "
-					print (str(datetime.utcnow()) + ": Stock holding: " + last_stock[j] + " purchased on " + str(last_purchase_time[j]) + ", Gain since last purchase:" + prefix + str(gains_since_stk_purchase) + "%")
-					if stk_value < scrap_stk_threshold:
-						scrap_stox += 1
-						re_purchasable[j] = 1.0
-				elif last_stock_present_price == None:
+				stock_quote = robinhood_calls("last_trade_price('" + last_stock[j] + "')", last_stock[j])
+				if stock_quote != None:
+					last_stock_present_price = float(stock_quote[0][0])
+					if last_stock_present_price != None and last_stock_present_price > 0.0:
+						stk_value = last_stock_quantity[j] * last_stock_present_price
+						new_balance = new_balance + stk_value
+						gains_since_stk_purchase = 100.0*(last_stock_present_price - last_stock_purchase_price[j])/last_stock_purchase_price[j]
+						if gains_since_stk_purchase >= 0.0:
+							prefix = "\033[1;32;40m "
+						else:
+							prefix = "\033[1;31;40m "
+						print (str(datetime.utcnow()) + ": Stock holding: " + last_stock[j] + " purchased on " + str(last_purchase_time[j]) + ", Gain since last purchase:" + prefix + str(gains_since_stk_purchase) + "%")
+						if stk_value < scrap_stk_threshold:
+							scrap_stox += 1
+							re_purchasable[j] = 1.0
+				else:
 					print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 			avail_cash = free_cash / max (max_stx_to_hold - len(holdings_array[0]) + scrap_stox,  1)
 
@@ -362,9 +364,11 @@ def purchase_accounting(last_purchase_time, last_stock, last_stock_quantity, las
 	global my_trader, new_stocks_found
 
 	final_stock_price = 0.0
-	final_stock_price = float(robinhood_calls("last_trade_price('" + final_stock + "')", final_stock)[0][0])
+	stock_quote = robinhood_calls("last_trade_price('" + final_stock + "')", final_stock)
+	if stock_quote != None:
+		final_stock_price = float(stock_quote[0][0])
 
-	if final_stock_price != None and final_stock_price > 0.0:
+	if final_stock_price > 0.0:
 		total_stocks = math.floor(avail_cash/final_stock_price)
 		if total_stocks > 0.0:
 			final_purchase_amount = final_stock_price * total_stocks
@@ -395,9 +399,11 @@ def check_stock_expiry_sale(stk, purchase_date, purchase_price):
 
 def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
 	sale_price = 0.0
-	sale_price = float(robinhood_calls("last_trade_price('" + stk[stk_idx] + "')", stk[stk_idx])[0][0])
+	stock_quote = robinhood_calls("last_trade_price('" + stk[stk_idx] + "')", stk[stk_idx])
+	if stock_quote != None:
+		sale_price = float(stock_quote[0][0])
 
-	if sale_price != None and sale_price > 0.0:
+	if sale_price > 0.0:
 		free_cash = free_cash + float(count) * sale_price
 		sale_logger(free_cash, stk_idx, len(stk))
 
@@ -426,8 +432,11 @@ def result_check(url,last_stock,free_cash,re_purchase):
 			stk, sector = get_stock_name(page_source)
 			for i in range(0,11):
 				page_source = page_source.replace(str("quote.ashx?t=" + stk + "&ty=c&p=d&b=1"),"")#Delete first stock from page source string to arrive at next stock
-			final_stock_price = float(robinhood_calls("last_trade_price('" + stk + "')", stk)[0][0])
-			if final_stock_price != None and final_stock_price <= free_cash:#Proceed only if stock price lower than available cash
+			final_stock_price = 0.0
+			stock_quote = robinhood_calls("last_trade_price('" + stk + "')", stk)
+			if stock_quote != None:
+				final_stock_price = float(stock_quote[0][0])
+			if final_stock_price != 0.0 and final_stock_price <= free_cash:#Proceed only if stock price lower than available cash
 				if stk not in new_stocks_found:
 					json_obj = robinhood_calls("instruments('" + stk + "')", stk)
 
