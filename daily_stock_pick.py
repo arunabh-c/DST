@@ -22,6 +22,7 @@ expired_stk_grwth_purchase_threshold = 0.0
 total_5minute_intervals_to_check_avg_growth = 10
 scrap_stk_threshold = 50.0
 new_stocks_found = []
+reset_color = "\[\033[0m\]"
 
 with open('select_order.csv', 'rb') as f:
 		reader = csv.reader(f)
@@ -288,7 +289,10 @@ def last_state_reader():
 			row_counter = 0
 			for line in f:
 				if ((row_counter < 4) and line != '\n'):
+					line = line.decode('unicode_escape').encode('ascii','ignore')
 					holdings_array[row_counter] = (line.rstrip('\n')).split(",")
+					if holdings_array[row_counter][0] == '':
+						holdings_array[row_counter].pop(0)
 				if row_counter == 4:
 					free_cash = float(line.rstrip('\n'))
 				row_counter = row_counter + 1
@@ -311,10 +315,10 @@ def last_state_reader():
 						new_balance = new_balance + stk_value
 						gains_since_stk_purchase = 100.0*(last_stock_present_price - last_stock_purchase_price[j])/last_stock_purchase_price[j]
 						if gains_since_stk_purchase >= 0.0:
-							prefix = "\033[1;32;40m "
+							prefix_color = "\033[1;32;40m "
 						else:
-							prefix = "\033[1;31;40m "
-						print (str(datetime.utcnow()) + ": Stock holding: " + last_stock[j] + " purchased on " + str(last_purchase_time[j]) + ", Gain since last purchase:" + prefix + str(gains_since_stk_purchase) + "%")
+							prefix_color = "\033[1;31;40m "
+						print (str(datetime.utcnow()) + ": Stock holding: " + last_stock[j] + " purchased on " + str(last_purchase_time[j]) + ", Gain since last purchase:" + prefix_color + str(gains_since_stk_purchase) + "%" + reset_color)
 						if stk_value < scrap_stk_threshold:
 							scrap_stox += 1
 							re_purchasable[j] = 1.0
@@ -324,10 +328,10 @@ def last_state_reader():
 
 			gains_since_beginning = 100.0*(new_balance - start_seed)/start_seed
 			if gains_since_beginning >= 0.0:
-				prefix = "\033[1;32;40m "
+				prefix_color = "\033[1;32;40m "
 			else:
-				prefix = "\033[1;31;40m "
-			print ("Net Gain since beginning:" + prefix + str(gains_since_beginning) + "%")
+				prefix_color = "\033[1;31;40m "
+			print ("Net Gain since beginning:" + prefix_color + str(gains_since_beginning) + "%" + reset_color)
 			print ("Latest Balance: " + str(new_balance))
 		else:
 			new_balance = start_seed
