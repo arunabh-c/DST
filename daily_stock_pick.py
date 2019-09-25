@@ -22,7 +22,7 @@ expired_stk_grwth_purchase_threshold = 0.0
 total_5minute_intervals_to_check_avg_growth = 10
 scrap_stk_threshold = 50.0
 new_stocks_found = []
-reset_color = "\[\033[0m\]"
+reset_color = "\033[0m"
 
 with open('select_order.csv', 'rb') as f:
 		reader = csv.reader(f)
