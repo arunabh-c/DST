@@ -23,6 +23,7 @@ total_5minute_intervals_to_check_avg_growth = 10
 scrap_stk_threshold = 50.0
 new_stocks_found = []
 reset_color = "\033[0m"
+my_trader = None
 
 with open('select_order.csv', 'rb') as f:
 		reader = csv.reader(f)
@@ -36,16 +37,17 @@ with open('banned_sectors.csv') as f:
 		banned_sectors = f.readlines()
 		banned_sectors = [x.strip() for x in banned_sectors]
 
-with open('user_details.txt') as f:
-		user_ids = f.readlines()
-		user_ids = [x.strip() for x in user_ids]
-
 with open('urls.txt') as f:
 		init_url = f.readlines()
 		init_url = [x.strip() for x in init_url]
 
-my_trader = Robinhood()
-my_trader.login(username=user_ids[0], password=user_ids[1])
+def init_robinhood():
+	global my_trader
+	with open('user_details.txt') as f:
+		user_ids = f.readlines()
+		user_ids = [x.strip() for x in user_ids]
+	my_trader = Robinhood()
+	my_trader.login(username=user_ids[0], password=user_ids[1])
 
 def robinhood_calls(command, stk):
 	exec_flag = False
@@ -570,12 +572,12 @@ def optimize(last_stock,last_purchase_time,free_cash,re_purchase):
 
 if __name__ == '__main__':
 	print ("Starting Loop..")
+	init_robinhood()
 	last_purchase_time, last_stock, last_stock_quantity, last_stock_purchase_price, free_cash, new_balance, avail_cash, re_purchase = last_state_reader() 
 	new_stocks_start_time = datetime.utcnow()
 	while True:
 		start_time = datetime.utcnow()
-		
-		
+				
 		#if True:
 		if (datetime.utcnow().isoweekday() in range(1,6)) and datetime.utcnow().time() > datetime.strptime('14:09','%H:%M').time() and datetime.utcnow().time() < datetime.strptime('22:01','%H:%M').time():
 			for i in range(0,len(last_stock)):#Check if any stocks ready for sale
@@ -601,4 +603,5 @@ if __name__ == '__main__':
 		compute_time = (datetime.utcnow() - start_time).seconds + (datetime.utcnow() - start_time).microseconds/1000000.0
 		time.sleep(max(0.1,(sleep_duration-compute_time)))
 		if sleep_duration > 300:
+			init_robinhood()
 			print datetime.utcnow().date()
