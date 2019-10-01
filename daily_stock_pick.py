@@ -26,26 +26,27 @@ reset_color = "\033[0m"
 my_trader = None
 
 with open('select_order.csv', 'rb') as f:
-		reader = csv.reader(f)
-		select_order = list(reader)
+	reader = csv.reader(f)
+	select_order = list(reader)
 
 with open('extra_filters.csv', 'rb') as f:
-		reader = csv.reader(f)
-		extra_filters = list(reader)
+	reader = csv.reader(f)
+	extra_filters = list(reader)
 
 with open('banned_sectors.csv') as f:
-		banned_sectors = f.readlines()
-		banned_sectors = [x.strip() for x in banned_sectors]
+	banned_sectors = f.readlines()
+	banned_sectors = [x.strip() for x in banned_sectors]
 
 with open('urls.txt') as f:
-		init_url = f.readlines()
-		init_url = [x.strip() for x in init_url]
+	init_url = f.readlines()
+	init_url = [x.strip() for x in init_url]
+
+with open('user_details.txt') as f:
+	user_ids = f.readlines()
+	user_ids = [x.strip() for x in user_ids]
 
 def init_robinhood():
 	global my_trader
-	with open('user_details.txt') as f:
-		user_ids = f.readlines()
-		user_ids = [x.strip() for x in user_ids]
 	my_trader = Robinhood()
 	my_trader.login(username=user_ids[0], password=user_ids[1])
 
