@@ -427,11 +427,11 @@ def sale_accounting(stk, count, purchase_price, free_cash, stk_idx):
 def result_check(url,last_stock,free_cash,re_purchase):
 	global my_trader, new_stocks_found
 	page_source = ""
+	stock = []
 	
 	page_source = finviz_calls(url)
 
 	if page_source != None:	
-		stock = []
 		prefix ="quote.ashx?t="
 
 		for i in range (0,int(page_source.count(prefix)/11)):
