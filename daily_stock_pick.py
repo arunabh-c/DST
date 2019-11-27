@@ -334,8 +334,9 @@ def last_state_reader():
 				prefix_color = "\033[1;32;40m "
 			else:
 				prefix_color = "\033[1;31;40m "
-			print ("Net Gain since beginning:" + prefix_color + str(gains_since_beginning) + "%" + reset_color)
-			print ("Latest Balance: " + str(new_balance))
+			print (str(datetime.utcnow()) + "Net Gain since beginning:" + prefix_color + str(gains_since_beginning) + "%" + reset_color)
+			print (str(datetime.utcnow()) + "Free Cash: " + str(free_cash))
+			print (str(datetime.utcnow()) + "Latest Balance: " + str(new_balance))
 		else:
 			new_balance = start_seed
 			free_cash = start_seed
