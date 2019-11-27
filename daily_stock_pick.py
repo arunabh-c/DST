@@ -142,7 +142,7 @@ def check_buy_opportunity(stk):
 		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	return buy_permit
 
-def test_short_term_sale(todays_perf, weeks_perf):
+def test_short_term_sale(todays_perf, weeks_perf, stk):
 	global stk_grwth_purchase_threshold, total_5minute_intervals_to_check_avg_growth
 
 	todays_perf_size = len(todays_perf['historicals'])
@@ -177,7 +177,7 @@ def check_sell_opportunity(stk):
 	sale_permit = False
 
 	if todays_perf != None and weeks_perf != None:
-		sale_permit = test_short_term_sale(todays_perf, weeks_perf)
+		sale_permit = test_short_term_sale(todays_perf, weeks_perf, stk)
 	else:
 		print str(datetime.utcnow()) + " Robinhood Data retrieve failed @ " + str(inspect.stack()[0][3])
 	return sale_permit
